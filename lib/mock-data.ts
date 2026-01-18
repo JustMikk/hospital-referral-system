@@ -675,3 +675,101 @@ export const currentUser = {
   hospital: "Central Medical Center",
   avatar: undefined,
 };
+
+// Mock Staff
+export interface Staff {
+  id: string;
+  name: string;
+  email: string;
+  role: "Doctor" | "Nurse" | "Admin" | "Lab Tech";
+  department: string;
+  status: "Active" | "Inactive";
+  lastActive: string;
+  avatar?: string;
+}
+
+export const staff: Staff[] = [
+  {
+    id: "S001",
+    name: "Dr. Emily Wilson",
+    email: "emily.wilson@centralmed.com",
+    role: "Doctor",
+    department: "Cardiology",
+    status: "Active",
+    lastActive: "Just now",
+  },
+  {
+    id: "S002",
+    name: "Nurse Jane Miller",
+    email: "jane.miller@centralmed.com",
+    role: "Nurse",
+    department: "Emergency",
+    status: "Active",
+    lastActive: "10 mins ago",
+  },
+  {
+    id: "S003",
+    name: "Admin John Doe",
+    email: "john.doe@centralmed.com",
+    role: "Admin",
+    department: "Administration",
+    status: "Active",
+    lastActive: "1 hour ago",
+  },
+  {
+    id: "S004",
+    name: "Dr. Michael Brown",
+    email: "m.brown@centralmed.com",
+    role: "Doctor",
+    department: "Pediatrics",
+    status: "Inactive",
+    lastActive: "2 days ago",
+  },
+];
+
+// Mock Roles & Permissions
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  usersCount: number;
+  permissions: Permission[];
+}
+
+export const roles: Role[] = [
+  {
+    id: "ROLE_ADMIN",
+    name: "Hospital Admin",
+    usersCount: 3,
+    permissions: [
+      { id: "PERM_USERS_MANAGE", name: "Manage Users", description: "Invite and manage staff accounts", enabled: true },
+      { id: "PERM_HOSPITAL_MANAGE", name: "Manage Hospital", description: "Edit hospital profile and settings", enabled: true },
+      { id: "PERM_AUDIT_VIEW", name: "View Audit Logs", description: "Access system audit logs", enabled: true },
+    ],
+  },
+  {
+    id: "ROLE_DOCTOR",
+    name: "Doctor",
+    usersCount: 15,
+    permissions: [
+      { id: "PERM_PATIENT_VIEW", name: "View Patients", description: "View patient records", enabled: true },
+      { id: "PERM_PATIENT_EDIT", name: "Edit Patients", description: "Update patient medical records", enabled: true },
+      { id: "PERM_REFERRAL_CREATE", name: "Create Referrals", description: "Create new patient referrals", enabled: true },
+    ],
+  },
+  {
+    id: "ROLE_NURSE",
+    name: "Nurse",
+    usersCount: 42,
+    permissions: [
+      { id: "PERM_PATIENT_VIEW", name: "View Patients", description: "View patient records", enabled: true },
+      { id: "PERM_VITALS_UPDATE", name: "Update Vitals", description: "Update patient vitals and notes", enabled: true },
+    ],
+  },
+];

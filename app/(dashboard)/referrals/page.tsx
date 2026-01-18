@@ -18,6 +18,7 @@ import { StatusBadge } from "@/components/medical/status-badge";
 import { EmptyState } from "@/components/medical/empty-state";
 import { referrals } from "@/lib/mock-data";
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 import Loading from "./loading";
 
@@ -59,20 +60,21 @@ export default function ReferralsPage() {
         </PageHeader>
 
         {/* Filters */}
-        <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+        {/* Filters */}
+        <Card className="shadow-sm border-border/40 bg-background/50 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   placeholder="Search referrals..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 bg-background/50 border-border/50 focus-visible:ring-primary/20 transition-all"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40">
+                <SelectTrigger className="w-full sm:w-40 bg-background/50 border-border/50 focus:ring-primary/20">
                   <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -86,7 +88,7 @@ export default function ReferralsPage() {
                 </SelectContent>
               </Select>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-40">
+                <SelectTrigger className="w-full sm:w-40 bg-background/50 border-border/50 focus:ring-primary/20">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -110,7 +112,7 @@ export default function ReferralsPage() {
                 description="Try adjusting your search or filter criteria, or create a new referral."
                 action={{
                   label: "Create Referral",
-                  onClick: () => {},
+                  onClick: () => { },
                 }}
               />
             </CardContent>
@@ -121,34 +123,52 @@ export default function ReferralsPage() {
               <Link
                 key={referral.id}
                 href={`/referrals/${referral.id}`}
-                className="group"
+                className="group block"
               >
-                <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06] hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+                <Card className={cn(
+                  "transition-all duration-200 hover:shadow-md border-border/40",
+                  referral.priority === "Emergency"
+                    ? "border-l-4 border-l-red-500 bg-red-50/10 dark:bg-red-900/10"
+                    : "hover:-translate-y-0.5"
+                )}>
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0 space-y-3">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-foreground">
+                          <h3 className="font-semibold text-foreground flex items-center gap-2">
                             {referral.patientName}
+                            {referral.priority === "Emergency" && (
+                              <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            )}
                           </h3>
                           <StatusBadge status={referral.priority} size="sm" />
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded">
                             {referral.id}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{referral.fromHospital}</span>
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                          <span>{referral.toHospital}</span>
+                          <span className="font-medium text-foreground/80">{referral.fromHospital}</span>
+                          <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                          <span className="font-medium text-foreground/80">{referral.toHospital}</span>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
                           {referral.reason}
                         </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>From: {referral.referringDoctor}</span>
-                          <span>To: {referral.receivingDoctor}</span>
-                          <span>
-                            {new Date(referral.createdAt).toLocaleDateString()}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
+                          <span className="flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-primary/50" />
+                            From: {referral.referringDoctor}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-primary/50" />
+                            To: {referral.receivingDoctor}
+                          </span>
+                          <span className="ml-auto font-medium">
+                            {new Date(referral.createdAt).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </span>
                         </div>
                       </div>

@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/medical/status-badge";
 import { EmptyState } from "@/components/medical/empty-state";
 import type { Patient } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
 
 interface PatientTableProps {
   patients: Patient[];
@@ -62,7 +63,7 @@ export function PatientTable({ patients }: PatientTableProps) {
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Search patients by name, ID, or hospital..."
               value={searchQuery}
@@ -70,7 +71,7 @@ export function PatientTable({ patients }: PatientTableProps) {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="pl-9"
+              className="pl-9 bg-background/50 border-border/50 focus-visible:ring-primary/20 transition-all"
             />
           </div>
           <Select
@@ -80,7 +81,7 @@ export function PatientTable({ patients }: PatientTableProps) {
               setCurrentPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-44">
+            <SelectTrigger className="w-full sm:w-44 bg-background/50 border-border/50 focus:ring-primary/20">
               <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -103,42 +104,52 @@ export function PatientTable({ patients }: PatientTableProps) {
           />
         ) : (
           <>
-            <div className="rounded-xl border border-border overflow-hidden">
+            <div className="rounded-xl border border-border/40 overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="font-semibold">Patient Name</TableHead>
-                    <TableHead className="font-semibold">Age / Gender</TableHead>
-                    <TableHead className="font-semibold">Hospital</TableHead>
-                    <TableHead className="font-semibold">Last Visit</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableRow className="bg-muted/30 hover:bg-muted/40">
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Patient Name</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Age / Gender</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Hospital</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Last Visit</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedPatients.map((patient) => (
                     <TableRow
                       key={patient.id}
-                      className="hover:bg-muted/50 transition-colors"
+                      className={cn(
+                        "transition-colors hover:bg-muted/40",
+                        patient.status === "Critical" && "bg-red-50/30 dark:bg-red-900/10 border-l-2 border-l-red-500"
+                      )}
                     >
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground">
+                          <span className={cn(
+                            "font-medium text-sm",
+                            patient.status === "Critical" ? "text-red-600 dark:text-red-400" : "text-foreground"
+                          )}>
                             {patient.name}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            ID: {patient.id}
+                          <span className="text-[10px] text-muted-foreground font-mono bg-muted/50 w-fit px-1 rounded mt-0.5">
+                            {patient.id}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground">
                         {patient.age} / {patient.gender}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground">
                         {patient.hospital}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(patient.lastVisit).toLocaleDateString()}
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(patient.lastVisit).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={patient.status} />
@@ -148,11 +159,11 @@ export function PatientTable({ patients }: PatientTableProps) {
                           variant="ghost"
                           size="sm"
                           asChild
-                          className="text-primary hover:text-primary"
+                          className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8 p-0 rounded-full"
                         >
                           <Link href={`/patients/${patient.id}`}>
-                            <Eye className="mr-1.5 h-4 w-4" />
-                            View
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">View</span>
                           </Link>
                         </Button>
                       </TableCell>

@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   Stethoscope,
   LogOut,
+  Shield,
+  UserCog,
 } from "lucide-react";
 import {
   Tooltip,
@@ -28,22 +30,30 @@ interface NavItem {
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
-  adminOnly?: boolean;
+  roles?: string[];
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Patients", href: "/patients", icon: Users },
-  { label: "Referrals", href: "/referrals", icon: FileText },
-  { label: "Medical Records", href: "/records", icon: FolderKanban },
-  { label: "Messages", href: "/messages", icon: MessageSquare },
-  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList },
-  { label: "Hospitals", href: "/hospitals", icon: Building2 },
-  { label: "Settings", href: "/settings", icon: Settings },
+  // Clinical Routes
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["doctor", "nurse"] },
+  { label: "Patients", href: "/patients", icon: Users, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Referrals", href: "/referrals", icon: FileText, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Medical Records", href: "/records", icon: FolderKanban, roles: ["doctor", "nurse"] },
+  { label: "Messages", href: "/messages", icon: MessageSquare, roles: ["doctor", "nurse", "hospital_admin"] },
+
+  // Admin Routes
+  { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["hospital_admin"] },
+  { label: "Hospital Mgmt", href: "/admin/hospitals", icon: Building2, roles: ["hospital_admin"] },
+  { label: "Staff Mgmt", href: "/admin/staff", icon: UserCog, roles: ["hospital_admin"] },
+  { label: "Permissions", href: "/admin/permissions", icon: Shield, roles: ["hospital_admin"] },
+
+  // Shared
+  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList, roles: ["hospital_admin", "doctor"] },
+  { label: "Settings", href: "/settings", icon: Settings, roles: ["doctor", "nurse", "hospital_admin"] },
 ];
 
 interface SidebarProps {
-  userRole?: "doctor" | "nurse" | "admin";
+  userRole?: "doctor" | "nurse" | "hospital_admin";
 }
 
 export function Sidebar({ userRole = "doctor" }: SidebarProps) {
@@ -51,7 +61,7 @@ export function Sidebar({ userRole = "doctor" }: SidebarProps) {
   const pathname = usePathname();
 
   const filteredNavItems = navItems.filter((item) => {
-    if (item.adminOnly && userRole !== "admin") return false;
+    if (item.roles && !item.roles.includes(userRole)) return false;
     return true;
   });
 

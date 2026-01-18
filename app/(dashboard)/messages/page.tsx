@@ -63,19 +63,20 @@ export default function MessagesPage() {
         description="Secure communication with other healthcare providers"
       />
 
-      <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06] overflow-hidden">
-        <div className="flex h-[calc(100vh-220px)] min-h-[500px]">
+      <Card className="shadow-sm border-border/40 overflow-hidden bg-background/50 backdrop-blur-xl">
+        <div className="flex h-[calc(100vh-220px)] min-h-[600px]">
           {/* Conversation List */}
           <div className="w-80 border-r border-border flex flex-col">
             {/* Search */}
-            <div className="p-4 border-b border-border">
+            {/* Search */}
+            <div className="p-4 border-b border-border/40 bg-muted/30">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   placeholder="Search conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 bg-background/50 border-border/50 focus-visible:ring-primary/20 transition-all"
                 />
               </div>
             </div>
@@ -95,33 +96,41 @@ export default function MessagesPage() {
                     key={conversation.id}
                     onClick={() => setSelectedConversation(conversation)}
                     className={cn(
-                      "w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border",
-                      selectedConversation?.id === conversation.id && "bg-muted"
+                      "w-full p-4 flex items-start gap-3 hover:bg-muted/60 transition-all duration-200 text-left border-b border-border/40 group relative",
+                      selectedConversation?.id === conversation.id
+                        ? "bg-primary/5 border-l-2 border-l-primary"
+                        : "border-l-2 border-l-transparent"
                     )}
                   >
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    <Avatar className={cn(
+                      "h-10 w-10 shrink-0 transition-transform duration-200 group-hover:scale-105",
+                      selectedConversation?.id === conversation.id && "ring-2 ring-primary/20"
+                    )}>
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                         {getInitials(conversation.participantName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-foreground truncate">
+                        <p className={cn(
+                          "font-medium text-sm truncate transition-colors",
+                          selectedConversation?.id === conversation.id ? "text-primary" : "text-foreground"
+                        )}>
                           {conversation.participantName}
                         </p>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap font-medium">
                           {conversation.lastMessageTime}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {conversation.participantRole} | {conversation.participantHospital}
+                      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+                        {conversation.participantRole}
                       </p>
-                      <p className="text-sm text-muted-foreground truncate mt-1">
+                      <p className="text-xs text-muted-foreground/80 truncate">
                         {conversation.lastMessage}
                       </p>
                     </div>
                     {conversation.unreadCount > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
                         {conversation.unreadCount}
                       </span>
                     )}
@@ -136,20 +145,21 @@ export default function MessagesPage() {
             {selectedConversation ? (
               <>
                 {/* Chat Header */}
-                <div className="p-4 border-b border-border flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                <div className="p-4 border-b border-border/40 bg-muted/10 flex items-center gap-4 backdrop-blur-sm">
+                  <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
                       {getInitials(selectedConversation.participantName)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-foreground">
+                    <p className="font-semibold text-foreground text-sm">
                       {selectedConversation.participantName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedConversation.participantRole} |{" "}
-                      {selectedConversation.participantHospital}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-primary/80">{selectedConversation.participantRole}</span>
+                      <span className="w-1 h-1 rounded-full bg-border" />
+                      <span>{selectedConversation.participantHospital}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -161,14 +171,14 @@ export default function MessagesPage() {
                       <div
                         key={message.id}
                         className={cn(
-                          "flex gap-3",
+                          "flex gap-3 group",
                           isCurrentUser && "flex-row-reverse"
                         )}
                       >
-                        <Avatar className="h-8 w-8 shrink-0">
+                        <Avatar className="h-8 w-8 shrink-0 ring-2 ring-background shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                           <AvatarFallback
                             className={cn(
-                              "text-xs",
+                              "text-[10px] font-medium",
                               isCurrentUser
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted text-muted-foreground"
@@ -185,21 +195,26 @@ export default function MessagesPage() {
                         >
                           <div
                             className={cn(
-                              "rounded-2xl px-4 py-2.5",
+                              "rounded-2xl px-5 py-3 shadow-sm text-sm leading-relaxed",
                               isCurrentUser
                                 ? "bg-primary text-primary-foreground rounded-tr-sm"
-                                : "bg-muted text-foreground rounded-tl-sm"
+                                : "bg-white dark:bg-muted/50 text-foreground rounded-tl-sm border border-border/50"
                             )}
                           >
-                            <p className="text-sm">{message.content}</p>
+                            <p>{message.content}</p>
                           </div>
                           <p
                             className={cn(
-                              "text-xs text-muted-foreground",
+                              "text-[10px] text-muted-foreground/60 font-medium px-1",
                               isCurrentUser && "text-right"
                             )}
                           >
                             {message.timestamp}
+                            {isCurrentUser && (
+                              <span className="ml-1.5 inline-block">
+                                {message.read ? "Read" : "Delivered"}
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -228,14 +243,14 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-border">
-                  <div className="flex items-center gap-3">
+                <div className="p-4 border-t border-border/40 bg-background/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 bg-muted/30 p-1.5 rounded-full border border-border/50 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                      className="shrink-0 rounded-full h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-background shadow-sm"
                     >
-                      <Paperclip className="h-5 w-5" />
+                      <Paperclip className="h-4 w-4" />
                       <span className="sr-only">Attach file</span>
                     </Button>
                     <Input
@@ -248,20 +263,24 @@ export default function MessagesPage() {
                           handleSendMessage();
                         }
                       }}
-                      className="flex-1"
+                      className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 h-9"
                     />
                     <Button
                       size="icon"
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim()}
+                      className="rounded-full h-9 w-9 shadow-sm"
                     >
-                      <Send className="h-5 w-5" />
+                      <Send className="h-4 w-4" />
                       <span className="sr-only">Send message</span>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Messages are encrypted and HIPAA compliant
-                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                      End-to-end Encrypted • HIPAA Compliant
+                    </p>
+                  </div>
                 </div>
               </>
             ) : (

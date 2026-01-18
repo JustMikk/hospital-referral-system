@@ -42,7 +42,7 @@ export default function AuditLogsPage() {
           description="Track all system activity and data access for compliance"
         />
 
-        <Card className="border-border bg-card">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg font-semibold text-card-foreground">
@@ -55,17 +55,17 @@ export default function AuditLogsPage() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   placeholder="Search logs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-background/50 border-border/50 focus-visible:ring-primary/20 transition-all"
                 />
               </div>
               <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
+                <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-border/50 focus:ring-primary/20">
+                  <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Filter by action" />
                 </SelectTrigger>
                 <SelectContent>

@@ -12,7 +12,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar userRole="admin" />
+      <Sidebar userRole="hospital_admin" />
       <div className="pl-64 transition-all duration-300">
         <TopBar />
         <main className="p-6">{children}</main>

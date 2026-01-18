@@ -44,7 +44,7 @@ const statusConfig: Record<
   // Patient statuses
   Active: { bg: "bg-emerald-50 dark:bg-emerald-950", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
   Inactive: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
-  Critical: { bg: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-400", dot: "bg-red-500" },
+  Critical: { bg: "bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800", text: "text-red-700 dark:text-red-400 font-semibold", dot: "bg-red-600 animate-pulse" },
   Discharged: { bg: "bg-blue-50 dark:bg-blue-950", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
 
   // Referral statuses
@@ -62,7 +62,7 @@ const statusConfig: Record<
   // Priority
   Normal: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
   Urgent: { bg: "bg-amber-50 dark:bg-amber-950", text: "text-amber-700 dark:text-amber-400" },
-  Emergency: { bg: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-400" },
+  Emergency: { bg: "bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800", text: "text-red-700 dark:text-red-400 font-semibold", dot: "bg-red-600 animate-pulse" },
 };
 
 export function StatusBadge({ status, className, size = "md" }: StatusBadgeProps) {
