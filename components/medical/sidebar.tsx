@@ -18,12 +18,12 @@ import {
   LogOut,
   Shield,
   UserCog,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 
 interface NavItem {
@@ -35,25 +35,30 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   // Clinical Routes
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["doctor", "nurse"] },
-  { label: "Patients", href: "/patients", icon: Users, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Patients", href: "/patients", icon: Users, roles: ["doctor", "nurse"] },
   { label: "Referrals", href: "/referrals", icon: FileText, roles: ["doctor", "nurse", "hospital_admin"] },
   { label: "Medical Records", href: "/records", icon: FolderKanban, roles: ["doctor", "nurse"] },
-  { label: "Messages", href: "/messages", icon: MessageSquare, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Messages", href: "/messages", icon: MessageSquare, roles: ["doctor", "nurse"] },
 
-  // Admin Routes
-  { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["hospital_admin"] },
-  { label: "Hospital Mgmt", href: "/admin/hospitals", icon: Building2, roles: ["hospital_admin"] },
-  { label: "Staff Mgmt", href: "/admin/staff", icon: UserCog, roles: ["hospital_admin"] },
-  { label: "Permissions", href: "/admin/permissions", icon: Shield, roles: ["hospital_admin"] },
+  // Hospital Admin Routes
+  { label: "Staff Mgmt", href: "/staff", icon: Users, roles: ["hospital_admin"] },
+  { label: "Departments", href: "/departments", icon: Building2, roles: ["hospital_admin"] },
+  { label: "Emergency Access", href: "/emergency-access", icon: AlertTriangle, roles: ["hospital_admin"] },
+
+  // System Admin Routes (Hidden from Hospital Admin)
+  { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["system_admin"] },
+  { label: "Hospital Mgmt", href: "/admin/hospitals", icon: Building2, roles: ["system_admin"] },
+  { label: "System Staff", href: "/admin/staff", icon: UserCog, roles: ["system_admin"] },
+  { label: "Permissions", href: "/admin/permissions", icon: Shield, roles: ["system_admin"] },
 
   // Shared
-  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList, roles: ["hospital_admin", "doctor"] },
-  { label: "Settings", href: "/settings", icon: Settings, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList, roles: ["hospital_admin", "doctor", "system_admin"] },
+  { label: "Settings", href: "/settings", icon: Settings, roles: ["doctor", "nurse", "hospital_admin", "system_admin"] },
 ];
 
 interface SidebarProps {
-  userRole?: "doctor" | "nurse" | "hospital_admin";
+  userRole?: "doctor" | "nurse" | "hospital_admin" | "system_admin";
 }
 
 export function Sidebar({ userRole = "doctor" }: SidebarProps) {
