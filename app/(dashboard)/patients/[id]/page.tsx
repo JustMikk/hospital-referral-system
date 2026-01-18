@@ -1,428 +1,264 @@
 "use client";
 
-import { use } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertTriangle, Phone, Mail, Droplet, Heart, FileText, Pill, Activity, ClipboardList, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { PageHeader } from "@/components/medical/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatusBadge } from "@/components/medical/status-badge";
-import { AuditLogItem } from "@/components/medical/audit-log-item";
-import { EmptyState } from "@/components/medical/empty-state";
-import { patients, medicalRecords, auditLogs, referrals } from "@/lib/mock-data";
-import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Activity,
+  AlertTriangle,
+  FileText,
+  Pill,
+  Stethoscope,
+  Clock,
+  ShieldAlert,
+  ChevronRight,
+  Plus,
+  History,
+  User
+} from "lucide-react";
+import { patients } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { notFound } from "next/navigation";
 
-interface PatientProfilePageProps {
-  params: Promise<{ id: string }>;
-}
+// Mock data extensions for the profile
+const medicalHistory = [
+  { date: "2024-03-10", diagnosis: "Acute Bronchitis", doctor: "Dr. Wilson", hospital: "General Hospital" },
+  { date: "2023-11-15", diagnosis: "Hypertension (Stage 1)", doctor: "Dr. Chen", hospital: "City Clinic" },
+];
 
-export default function PatientProfilePage({ params }: PatientProfilePageProps) {
-  const resolvedParams = use(params);
-  const router = useRouter();
-  const patient = patients.find((p) => p.id === resolvedParams.id);
+const medications = [
+  { name: "Amoxicillin", dosage: "500mg", freq: "3x daily", status: "Active", prescribed: "2024-03-10" },
+  { name: "Lisinopril", dosage: "10mg", freq: "1x daily", status: "Active", prescribed: "2023-11-15" },
+];
 
-  if (!patient) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <EmptyState
-          icon={FileText}
-          title="Patient not found"
-          description="The patient you are looking for does not exist."
-          action={{
-            label: "Go back to patients",
-            onClick: () => router.push("/patients"),
-          }}
-        />
-      </div>
-    );
-  }
+const labResults = [
+  { name: "Complete Blood Count", date: "2024-03-10", status: "Normal" },
+  { name: "Lipid Panel", date: "2023-11-15", status: "Abnormal" },
+];
 
-  const patientReferrals = referrals.filter((r) => r.patientId === patient.id);
-  const patientAuditLogs = auditLogs.filter((log) =>
-    log.details.includes(patient.name) || log.details.includes(patient.id)
-  );
+export default function PatientProfilePage({ params }: { params: { id: string } }) {
+  // In a real app, fetch patient by ID
+  const patient = patients.find(p => p.id === params.id) || patients[0]; // Fallback for demo
+
+  if (!patient) return notFound();
 
   return (
     <div className="space-y-6">
-      {/* Back button and header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-          className="shrink-0"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {patient.name}
-            </h1>
-            <StatusBadge status={patient.status} />
-            {patient.status === "Critical" && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Emergency
-              </span>
-            )}
+      {/* Header - Always Visible */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <Avatar className="h-20 w-20 border-2 border-border">
+            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${patient.id}`} />
+            <AvatarFallback>{patient.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight">{patient.name}</h1>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <span>{patient.age} yrs</span>
+              <span>•</span>
+              <span>{patient.gender}</span>
+              <span>•</span>
+              <span>ID: {patient.id}</span>
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <Badge variant="outline" className="gap-1">
+                <Building2Icon className="h-3 w-3" />
+                {patient.hospital}
+              </Badge>
+              {patient.status === "Critical" && (
+                <Badge variant="destructive" className="animate-pulse gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Critical Status
+                </Badge>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Patient ID: {patient.id} | {patient.hospital}
-          </p>
         </div>
-        <Button asChild>
-          <Link href={`/referrals/create?patientId=${patient.id}`}>
-            <Send className="mr-2 h-4 w-4" />
-            Create Referral
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2">
+            <History className="h-4 w-4" />
+            View History
+          </Button>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Note
+          </Button>
+        </div>
       </div>
 
-      {/* Critical Info Banner */}
-      {(patient.allergies.length > 0 || patient.chronicConditions.length > 0) && (
-        <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
-              <div className="space-y-2">
-                <p className="font-semibold text-amber-800 dark:text-amber-200">
-                  Critical Patient Information
-                </p>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {patient.allergies.length > 0 && (
-                    <div>
-                      <span className="font-medium text-amber-700 dark:text-amber-300">
-                        Allergies:{" "}
-                      </span>
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {patient.allergies.join(", ")}
-                      </span>
-                    </div>
-                  )}
-                  {patient.chronicConditions.length > 0 && (
-                    <div>
-                      <span className="font-medium text-amber-700 dark:text-amber-300">
-                        Chronic Conditions:{" "}
-                      </span>
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {patient.chronicConditions.join(", ")}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Patient Info Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Contact Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Phone className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium text-foreground">{patient.phone}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Mail className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm font-medium text-foreground">{patient.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Medical Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
-                <Droplet className="h-4 w-4 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Blood Type</p>
-                <p className="text-sm font-medium text-foreground">{patient.bloodType}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <Heart className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Age / Gender</p>
-                <p className="text-sm font-medium text-foreground">
-                  {patient.age} years / {patient.gender}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Emergency Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="font-medium text-foreground">
-              {patient.emergencyContact.name}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {patient.emergencyContact.relationship}
-            </p>
-            <p className="text-sm text-primary">{patient.emergencyContact.phone}</p>
-          </CardContent>
-        </Card>
+      {/* Critical Alerts - Never Hidden */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Alert variant="destructive" className="bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Allergies</AlertTitle>
+          <AlertDescription>Penicillin (Severe), Peanuts (Mild)</AlertDescription>
+        </Alert>
+        <Alert className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30">
+          <Activity className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertTitle className="text-amber-800 dark:text-amber-400">Chronic Conditions</AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-500">Asthma, Type 2 Diabetes</AlertDescription>
+        </Alert>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history">Medical History</TabsTrigger>
-          <TabsTrigger value="labs">Lab Results</TabsTrigger>
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-          <TabsTrigger value="referrals">Referrals</TabsTrigger>
-          <TabsTrigger value="audit">Audit Log</TabsTrigger>
+      {/* Tabbed Content */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent space-x-6">
+          <TabsTrigger
+            value="overview"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+          >
+            Medical History
+          </TabsTrigger>
+          <TabsTrigger
+            value="medications"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+          >
+            Medications
+          </TabsTrigger>
+          <TabsTrigger
+            value="labs"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+          >
+            Lab Results
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Medical Records</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {medicalRecords.slice(0, 3).map((record) => (
-                <div
-                  key={record.id}
-                  className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    {record.type === "Diagnosis" && <Activity className="h-5 w-5 text-primary" />}
-                    {record.type === "Lab Result" && <FileText className="h-5 w-5 text-primary" />}
-                    {record.type === "Prescription" && <Pill className="h-5 w-5 text-primary" />}
-                    {record.type === "Procedure" && <Heart className="h-5 w-5 text-primary" />}
-                    {record.type === "Note" && <ClipboardList className="h-5 w-5 text-primary" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium text-foreground">{record.title}</p>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(record.date).toLocaleDateString()}
-                      </span>
+        <TabsContent value="overview" className="space-y-6 mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-primary" />
+                  Active Diagnoses
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {medicalHistory.slice(0, 1).map((item, i) => (
+                  <div key={i} className="flex justify-between items-start pb-4 border-b last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{item.diagnosis}</p>
+                      <p className="text-sm text-muted-foreground">Diagnosed by {item.doctor}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{record.details}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {record.doctor} | {record.hospital}
-                    </p>
+                    <Badge variant="secondary">Active</Badge>
                   </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-primary" />
+                  Current Medications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {medications.map((med, i) => (
+                  <div key={i} className="flex justify-between items-center pb-4 border-b last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{med.name} {med.dosage}</p>
+                      <p className="text-xs text-muted-foreground">{med.freq}</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">{med.status}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <Card>
+            <CardContent className="p-0">
+              {medicalHistory.map((item, i) => (
+                <div key={i} className="flex items-center p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
+                    <History className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{item.diagnosis}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{item.date}</span>
+                      <span>•</span>
+                      <span>{item.hospital}</span>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">View Details</Button>
                 </div>
               ))}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="history">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Medical History</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {medicalRecords
-                .filter((r) => r.type === "Diagnosis" || r.type === "Procedure")
-                .map((record) => (
-                  <div
-                    key={record.id}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Activity className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-foreground">{record.title}</p>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(record.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{record.details}</p>
+        <TabsContent value="medications" className="mt-6">
+          {/* Reusing similar structure or detailed table */}
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-muted-foreground text-sm">Detailed medication history would go here...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="labs" className="mt-6">
+          <Card>
+            <CardContent className="p-0">
+              {labResults.map((lab, i) => (
+                <div key={i} className="flex items-center p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-4">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{lab.name}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{lab.date}</span>
                     </div>
                   </div>
-                ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="labs">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Lab Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {medicalRecords.filter((r) => r.type === "Lab Result").length === 0 ? (
-                <EmptyState
-                  icon={FileText}
-                  title="No lab results"
-                  description="Lab results will appear here when available."
-                />
-              ) : (
-                <div className="space-y-3">
-                  {medicalRecords
-                    .filter((r) => r.type === "Lab Result")
-                    .map((record) => (
-                      <div
-                        key={record.id}
-                        className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
-                      >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                          <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium text-foreground">{record.title}</p>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(record.date).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">{record.details}</p>
-                        </div>
-                      </div>
-                    ))}
+                  <Badge variant={lab.status === "Normal" ? "secondary" : "destructive"}>
+                    {lab.status}
+                  </Badge>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="prescriptions">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Prescriptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {medicalRecords.filter((r) => r.type === "Prescription").length === 0 ? (
-                <EmptyState
-                  icon={Pill}
-                  title="No prescriptions"
-                  description="Prescriptions will appear here when available."
-                />
-              ) : (
-                <div className="space-y-3">
-                  {medicalRecords
-                    .filter((r) => r.type === "Prescription")
-                    .map((record) => (
-                      <div
-                        key={record.id}
-                        className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
-                      >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                          <Pill className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-medium text-foreground">{record.title}</p>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(record.date).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">{record.details}</p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="referrals">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Referrals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {patientReferrals.length === 0 ? (
-                <EmptyState
-                  icon={Send}
-                  title="No referrals"
-                  description="Referrals for this patient will appear here."
-                  action={{
-                    label: "Create Referral",
-                    onClick: () =>
-                      router.push(`/referrals/create?patientId=${patient.id}`),
-                  }}
-                />
-              ) : (
-                <div className="space-y-3">
-                  {patientReferrals.map((referral) => (
-                    <Link
-                      key={referral.id}
-                      href={`/referrals/${referral.id}`}
-                      className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium text-foreground">
-                          {referral.toHospital}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {referral.reason}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(referral.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <StatusBadge status={referral.status} />
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="audit">
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Audit Log</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {patientAuditLogs.length === 0 ? (
-                <EmptyState
-                  icon={ClipboardList}
-                  title="No audit logs"
-                  description="Activity logs for this patient will appear here."
-                />
-              ) : (
-                <div className="space-y-3">
-                  {patientAuditLogs.map((entry) => (
-                    <AuditLogItem key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              )}
+              ))}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+function Building2Icon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+      <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+      <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+      <path d="M10 6h4" />
+      <path d="M10 10h4" />
+      <path d="M10 14h4" />
+      <path d="M10 18h4" />
+    </svg>
+  )
 }

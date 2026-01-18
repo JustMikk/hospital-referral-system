@@ -19,12 +19,16 @@ import {
   Shield,
   UserCog,
   AlertTriangle,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+import { useAuth } from "@/context/auth-context";
 
 interface NavItem {
   label: string;
@@ -37,6 +41,7 @@ const navItems: NavItem[] = [
   // Clinical Routes
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["doctor", "nurse", "hospital_admin"] },
   { label: "Patients", href: "/patients", icon: Users, roles: ["doctor", "nurse"] },
+  { label: "Tasks", href: "/tasks", icon: ClipboardCheck, roles: ["nurse"] },
   { label: "Referrals", href: "/referrals", icon: FileText, roles: ["doctor", "nurse", "hospital_admin"] },
   { label: "Medical Records", href: "/records", icon: FolderKanban, roles: ["doctor", "nurse"] },
   { label: "Messages", href: "/messages", icon: MessageSquare, roles: ["doctor", "nurse"] },
@@ -57,11 +62,8 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings, roles: ["doctor", "nurse", "hospital_admin", "system_admin"] },
 ];
 
-interface SidebarProps {
-  userRole?: "doctor" | "nurse" | "hospital_admin" | "system_admin";
-}
-
-export function Sidebar({ userRole = "doctor" }: SidebarProps) {
+export function Sidebar() {
+  const { userRole } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 

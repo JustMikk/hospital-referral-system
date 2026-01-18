@@ -65,7 +65,7 @@ export function PatientTable({ patients }: PatientTableProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
-              placeholder="Search patients by name, ID, or hospital..."
+              placeholder="Search by name, ID, referral ID, or hospital..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -121,14 +121,15 @@ export function PatientTable({ patients }: PatientTableProps) {
                     <TableRow
                       key={patient.id}
                       className={cn(
-                        "transition-colors hover:bg-muted/40",
+                        "transition-colors hover:bg-muted/40 cursor-pointer group",
                         patient.status === "Critical" && "bg-red-50/30 dark:bg-red-900/10 border-l-2 border-l-red-500"
                       )}
+                      onClick={() => window.location.href = `/patients/${patient.id}`}
                     >
                       <TableCell>
                         <div className="flex flex-col">
                           <span className={cn(
-                            "font-medium text-sm",
+                            "font-medium text-sm group-hover:text-primary transition-colors",
                             patient.status === "Critical" ? "text-red-600 dark:text-red-400" : "text-foreground"
                           )}>
                             {patient.name}
@@ -160,6 +161,7 @@ export function PatientTable({ patients }: PatientTableProps) {
                           size="sm"
                           asChild
                           className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8 p-0 rounded-full"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <Link href={`/patients/${patient.id}`}>
                             <Eye className="h-4 w-4" />

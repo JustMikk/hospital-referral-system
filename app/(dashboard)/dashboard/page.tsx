@@ -12,11 +12,11 @@ import { PatientActivityChart } from "@/components/dashboard/patient-activity-ch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/context/auth-context";
+
 export default function DashboardPage() {
-  // In a real app, this would be determined by the auth context
-  // For this demo, we'll check if the current user role is hospital_admin
-  // Note: layout.tsx is currently hardcoded to 'hospital_admin' for testing
-  const isHospitalAdmin = currentUser.role === "hospital_admin" || true; // Force true for testing as per instructions
+  const { userRole } = useAuth();
+  const isHospitalAdmin = userRole === "hospital_admin";
 
   if (isHospitalAdmin) {
     return <HospitalAdminDashboard />;
@@ -132,7 +132,7 @@ function HospitalAdminDashboard() {
           title="Emergency Events"
           value={3} // Mock value
           icon={AlertTriangle}
-          variant="red"
+          variant="orange" // Changed from 'red' to 'orange' as 'red' is not in the type definition
           trend={{ value: 1, label: "last 24h" }}
         />
       </div>

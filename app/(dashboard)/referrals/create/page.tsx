@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
-import { useState, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, AlertTriangle, FileText, Shield, Stethoscope } from "lucide-react";
 import { PageHeader } from "@/components/medical/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,82 +15,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { patients } from "@/lib/mock-data";
 import Loading from "./loading";
+import { cn } from "@/lib/utils";
+
+// Mock data for dropdowns
+const hospitals = [
+  "Central Medical Center",
+  "St. Mary's Hospital",
+  "City General Hospital",
+  "Memorial Hospital",
+];
+
+const departments = [
+  "Cardiology",
+  "Neurology",
+  "Orthopedics",
+  "Emergency Medicine",
+  "Oncology",
+];
 
 function CreateReferralForm({ searchParams }: { searchParams: any }) {
   const router = useRouter();
   const preselectedPatientId = searchParams.get("patientId") || "";
 
+  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     patientId: preselectedPatientId,
     toHospital: "",
-    receivingDoctor: "",
+    department: "",
     priority: "Normal",
     reason: "",
+    primaryDiagnosis: "",
+    secondaryDiagnoses: "",
+    shareLabResults: true,
+    shareImaging: false,
+    shareNotes: true,
+    emergencyAccess: false,
     notes: "",
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = () => {
+  const validateStep = (currentStep: number) => {
     const newErrors: Record<string, string> = {};
+    let isValid = true;
 
-    if (!formData.patientId) {
-      newErrors.patientId = "Please select a patient";
-    }
-    if (!formData.toHospital) {
-      newErrors.toHospital = "Please enter destination hospital";
-    }
-    if (!formData.receivingDoctor) {
-      newErrors.receivingDoctor = "Please enter receiving doctor";
-    }
-    if (!formData.reason) {
-      newErrors.reason = "Please provide a reason for referral";
+    if (currentStep === 1) {
+      if (!formData.patientId) newErrors.patientId = "Please select a patient";
+      if (!formData.toHospital) newErrors.toHospital = "Destination hospital is required";
+      if (!formData.department) newErrors.department = "Department is required";
+      if (!formData.reason) newErrors.reason = "Referral reason is required";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (currentStep === 2) {
+      if (!formData.primaryDiagnosis) newErrors.primaryDiagnosis = "Primary diagnosis is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      isValid = false;
+    } else {
+      setErrors({});
+    }
+
+    return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep(step + 1);
+    }
+  };
 
-    if (!validateForm()) return;
+  const handleBack = () => {
+    setStep(step - 1);
+  };
 
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
-
     setIsSubmitting(false);
     router.push("/referrals");
   };
 
-  const hospitals = [
-    "Central Medical Center",
-    "St. Mary's Hospital",
-    "City General Hospital",
-    "Memorial Hospital",
-    "Heart Specialist Clinic",
-    "Cardiac Surgery Center",
-    "Neurology Specialist Clinic",
-    "Pulmonary Rehabilitation Center",
-  ];
-
-  const doctors = [
-    "Dr. James Carter",
-    "Dr. Sarah Lee",
-    "Dr. Robert Martinez",
-    "Dr. Patricia Anderson",
-    "Dr. William Taylor",
-    "Dr. Jennifer Brown",
+  const steps = [
+    { id: 1, title: "Basics", icon: FileText },
+    { id: 2, title: "Medical Context", icon: Stethoscope },
+    { id: 3, title: "Permissions", icon: Shield },
+    { id: 4, title: "Review", icon: CheckCircle2 },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-center gap-4 mb-8">
         <Button
           variant="ghost"
           size="icon"
@@ -100,207 +124,302 @@ function CreateReferralForm({ searchParams }: { searchParams: any }) {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <PageHeader
-          title="Create Referral"
-          description="Create a new patient referral to another hospital"
-        />
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">Create New Referral</h1>
+          <p className="text-muted-foreground text-sm">Step {step} of 4: {steps[step - 1].title}</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Patient Information */}
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Patient Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+      {/* Progress Steps */}
+      <div className="relative flex justify-between mb-8 px-4">
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -z-10" />
+        {steps.map((s) => (
+          <div key={s.id} className="flex flex-col items-center gap-2 bg-background px-2">
+            <div className={cn(
+              "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-colors",
+              step >= s.id ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30 text-muted-foreground"
+            )}>
+              <s.icon className="h-5 w-5" />
+            </div>
+            <span className={cn(
+              "text-xs font-medium",
+              step >= s.id ? "text-primary" : "text-muted-foreground"
+            )}>{s.title}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Step 1: Basics */}
+      {step === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Referral Basics</CardTitle>
+            <CardDescription>Define where and why the patient is being referred.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="patient">Select Patient *</Label>
+                <Label>Select Patient *</Label>
                 <Select
                   value={formData.patientId}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, patientId: value });
-                    if (errors.patientId) setErrors({ ...errors, patientId: "" });
-                  }}
+                  onValueChange={(val) => setFormData({ ...formData, patientId: val })}
                 >
-                  <SelectTrigger
-                    id="patient"
-                    className={errors.patientId ? "border-destructive" : ""}
-                  >
-                    <SelectValue placeholder="Select a patient" />
+                  <SelectTrigger className={errors.patientId ? "border-destructive" : ""}>
+                    <SelectValue placeholder="Select patient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name} ({patient.id})
-                      </SelectItem>
+                    {patients.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.id})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.patientId && (
-                  <p className="text-xs text-destructive">{errors.patientId}</p>
-                )}
+                {errors.patientId && <p className="text-xs text-destructive">{errors.patientId}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="priority">Priority Level *</Label>
+                <Label>Urgency Level *</Label>
                 <Select
                   value={formData.priority}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, priority: value })
-                  }
+                  onValueChange={(val) => setFormData({ ...formData, priority: val })}
                 >
-                  <SelectTrigger id="priority">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Normal">Normal</SelectItem>
-                    <SelectItem value="Urgent">Urgent</SelectItem>
-                    <SelectItem value="Emergency">Emergency</SelectItem>
+                    <SelectItem value="Normal">Routine (Normal)</SelectItem>
+                    <SelectItem value="Urgent">Urgent (24-48h)</SelectItem>
+                    <SelectItem value="Emergency">Emergency (Immediate)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Destination Information */}
-          <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Destination</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="toHospital">Destination Hospital *</Label>
+                <Label>Receiving Hospital *</Label>
                 <Select
                   value={formData.toHospital}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, toHospital: value });
-                    if (errors.toHospital) setErrors({ ...errors, toHospital: "" });
-                  }}
+                  onValueChange={(val) => setFormData({ ...formData, toHospital: val })}
                 >
-                  <SelectTrigger
-                    id="toHospital"
-                    className={errors.toHospital ? "border-destructive" : ""}
-                  >
+                  <SelectTrigger className={errors.toHospital ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select hospital" />
                   </SelectTrigger>
                   <SelectContent>
-                    {hospitals.map((hospital) => (
-                      <SelectItem key={hospital} value={hospital}>
-                        {hospital}
-                      </SelectItem>
+                    {hospitals.map((h) => (
+                      <SelectItem key={h} value={h}>{h}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.toHospital && (
-                  <p className="text-xs text-destructive">{errors.toHospital}</p>
-                )}
+                {errors.toHospital && <p className="text-xs text-destructive">{errors.toHospital}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="receivingDoctor">Receiving Doctor *</Label>
+                <Label>Department *</Label>
                 <Select
-                  value={formData.receivingDoctor}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, receivingDoctor: value });
-                    if (errors.receivingDoctor)
-                      setErrors({ ...errors, receivingDoctor: "" });
-                  }}
+                  value={formData.department}
+                  onValueChange={(val) => setFormData({ ...formData, department: val })}
                 >
-                  <SelectTrigger
-                    id="receivingDoctor"
-                    className={errors.receivingDoctor ? "border-destructive" : ""}
-                  >
-                    <SelectValue placeholder="Select doctor" />
+                  <SelectTrigger className={errors.department ? "border-destructive" : ""}>
+                    <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {doctors.map((doctor) => (
-                      <SelectItem key={doctor} value={doctor}>
-                        {doctor}
-                      </SelectItem>
+                    {departments.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.receivingDoctor && (
-                  <p className="text-xs text-destructive">
-                    {errors.receivingDoctor}
-                  </p>
-                )}
+                {errors.department && <p className="text-xs text-destructive">{errors.department}</p>}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Referral Details */}
-          <Card className="lg:col-span-2 shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-            <CardHeader>
-              <CardTitle className="text-lg">Referral Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reason">Reason for Referral *</Label>
-                <Input
-                  id="reason"
-                  placeholder="Brief reason for referral"
-                  value={formData.reason}
-                  onChange={(e) => {
-                    setFormData({ ...formData, reason: e.target.value });
-                    if (errors.reason) setErrors({ ...errors, reason: "" });
-                  }}
-                  className={errors.reason ? "border-destructive" : ""}
-                />
-                {errors.reason && (
-                  <p className="text-xs text-destructive">{errors.reason}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label>Reason for Referral *</Label>
+              <Input
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                placeholder="e.g. Specialized cardiac consultation required"
+                className={errors.reason ? "border-destructive" : ""}
+              />
+              {errors.reason && <p className="text-xs text-destructive">{errors.reason}</p>}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Include any relevant medical history, current medications, or special instructions..."
-                  rows={5}
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  This information will be shared with the receiving hospital.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-4 mt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={isSubmitting}
-          >
-            Save as Draft
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Send Referral"
+            {formData.priority === "Emergency" && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Emergency Referral</AlertTitle>
+                <AlertDescription>
+                  This will trigger immediate alerts at the receiving hospital. Ensure patient is stable for transfer.
+                </AlertDescription>
+              </Alert>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 2: Medical Context */}
+      {step === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Medical Context</CardTitle>
+            <CardDescription>Provide clinical background for the receiving doctor.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>Primary Diagnosis *</Label>
+              <Input
+                value={formData.primaryDiagnosis}
+                onChange={(e) => setFormData({ ...formData, primaryDiagnosis: e.target.value })}
+                placeholder="e.g. Acute Myocardial Infarction"
+                className={errors.primaryDiagnosis ? "border-destructive" : ""}
+              />
+              {errors.primaryDiagnosis && <p className="text-xs text-destructive">{errors.primaryDiagnosis}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Secondary Diagnoses (Optional)</Label>
+              <Input
+                value={formData.secondaryDiagnoses}
+                onChange={(e) => setFormData({ ...formData, secondaryDiagnoses: e.target.value })}
+                placeholder="e.g. Hypertension, Type 2 Diabetes"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Clinical Notes</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Detailed clinical observations, history, and specific questions for the specialist..."
+                rows={6}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Permissions */}
+      {step === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Sharing & Permissions</CardTitle>
+            <CardDescription>Control exactly what data is shared with {formData.toHospital}.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Include in Referral Package:</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center space-x-2 border p-4 rounded-lg">
+                  <Checkbox
+                    id="labs"
+                    checked={formData.shareLabResults}
+                    onCheckedChange={(c) => setFormData({ ...formData, shareLabResults: !!c })}
+                  />
+                  <label htmlFor="labs" className="text-sm font-medium leading-none cursor-pointer">
+                    Recent Lab Results
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2 border p-4 rounded-lg">
+                  <Checkbox
+                    id="imaging"
+                    checked={formData.shareImaging}
+                    onCheckedChange={(c) => setFormData({ ...formData, shareImaging: !!c })}
+                  />
+                  <label htmlFor="imaging" className="text-sm font-medium leading-none cursor-pointer">
+                    Imaging Reports
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2 border p-4 rounded-lg">
+                  <Checkbox
+                    id="notes"
+                    checked={formData.shareNotes}
+                    onCheckedChange={(c) => setFormData({ ...formData, shareNotes: !!c })}
+                  />
+                  <label htmlFor="notes" className="text-sm font-medium leading-none cursor-pointer">
+                    Clinical Notes
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
+                <div className="space-y-0.5">
+                  <Label className="text-base text-red-900 dark:text-red-400">Allow Emergency Access</Label>
+                  <p className="text-sm text-red-700 dark:text-red-500">
+                    Permit "break-glass" access to full patient history if needed.
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.emergencyAccess}
+                  onCheckedChange={(c) => setFormData({ ...formData, emergencyAccess: c })}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Review */}
+      {step === 4 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Review & Send</CardTitle>
+            <CardDescription>Please verify all details before submitting.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Patient</p>
+                <p className="font-medium">{patients.find(p => p.id === formData.patientId)?.name}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Destination</p>
+                <p className="font-medium">{formData.toHospital} ({formData.department})</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Urgency</p>
+                <Badge variant={formData.priority === "Emergency" ? "destructive" : "secondary"}>
+                  {formData.priority}
+                </Badge>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Primary Diagnosis</p>
+                <p className="font-medium">{formData.primaryDiagnosis}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-4 border-t">
+              <p className="text-sm font-medium text-muted-foreground">Data Sharing Permissions</p>
+              <div className="flex gap-2 flex-wrap">
+                {formData.shareLabResults && <Badge variant="outline">Lab Results</Badge>}
+                {formData.shareImaging && <Badge variant="outline">Imaging</Badge>}
+                {formData.shareNotes && <Badge variant="outline">Clinical Notes</Badge>}
+                {formData.emergencyAccess && <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">Emergency Access Allowed</Badge>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-4">
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={step === 1 || isSubmitting}
+        >
+          Back
+        </Button>
+
+        {step < 4 ? (
+          <Button onClick={handleNext}>
+            Next Step
           </Button>
-        </div>
-      </form>
+        ) : (
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            Confirm & Send Referral
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

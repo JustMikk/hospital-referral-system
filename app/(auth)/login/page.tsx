@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/select";
 import { Eye, EyeOff, Stethoscope, Loader2 } from "lucide-react";
 
+import { useAuth, UserRole } from "@/context/auth-context";
+
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,16 +56,25 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Set global auth state
+    login(formData.role as UserRole);
+
     setIsLoading(false);
-    router.push("/dashboard");
+
+    // Redirect based on role
+    if (formData.role === "system_admin") {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
@@ -77,13 +89,13 @@ export default function LoginPage() {
             </div>
             <span className="text-2xl font-bold">Refero</span>
           </div>
-          
+
           <div className="space-y-6">
             <h1 className="text-4xl font-bold leading-tight text-balance">
               Secure Hospital Referral System
             </h1>
             <p className="text-lg text-white/80 max-w-md text-pretty">
-              Streamline patient referrals and share medical records securely 
+              Streamline patient referrals and share medical records securely
               across healthcare facilities in real-time.
             </p>
             <div className="grid grid-cols-3 gap-4 pt-4">
@@ -147,7 +159,8 @@ export default function LoginPage() {
                 <SelectContent>
                   <SelectItem value="doctor">Doctor</SelectItem>
                   <SelectItem value="nurse">Nurse</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
+                  <SelectItem value="hospital_admin">Hospital Admin</SelectItem>
+                  <SelectItem value="system_admin">System Admin</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (
