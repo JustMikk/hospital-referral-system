@@ -1,10 +1,17 @@
-"use client";
-
 import { PageHeader } from "@/components/medical/page-header";
 import { PatientTable } from "@/components/medical/patient-table";
-import { patients } from "@/lib/mock-data";
+import { getPatients } from "@/app/actions/patients";
 
-export default function PatientsPage() {
+export default async function PatientsPage() {
+  const patientsData = await getPatients();
+
+  // Map Prisma data to match frontend expectations if necessary
+  const patients = patientsData.map(p => ({
+    ...p,
+    hospital: p.hospital.name,
+    lastVisit: p.lastVisit.toISOString(),
+  }));
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -12,7 +19,7 @@ export default function PatientsPage() {
         description="Manage and view patient records across all connected hospitals"
       />
 
-      <PatientTable patients={patients} />
+      <PatientTable patients={patients as any} />
     </div>
   );
 }

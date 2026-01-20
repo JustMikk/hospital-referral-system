@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -65,7 +65,8 @@ const navItems: NavItem[] = [
 ];
 
 export function Sidebar() {
-  const { userRole } = useAuth();
+  const { userRole, logout } = useAuth();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
@@ -155,25 +156,31 @@ export function Sidebar() {
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    href="/login"
-                    className="flex items-center justify-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      router.push("/login");
+                    }}
+                    className="w-full flex items-center justify-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <LogOut className="h-5 w-5" />
-                  </Link>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8}>
                   Sign out
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              <button
+                onClick={async () => {
+                  await logout();
+                  router.push("/login");
+                }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign out</span>
-              </Link>
+              </button>
             )}
           </div>
         </div>

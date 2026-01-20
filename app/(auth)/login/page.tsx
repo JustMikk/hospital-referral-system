@@ -1,35 +1,27 @@
 "use client";
 
-import React from "react"
-
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Eye, EyeOff, Stethoscope, Loader2 } from "lucide-react";
-
-import { useAuth, UserRole } from "@/context/auth-context";
+import { Eye, EyeOff, Stethoscope, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/context/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -42,12 +34,6 @@ export default function LoginPage() {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
-    if (!formData.role) {
-      newErrors.role = "Please select your role";
     }
 
     setErrors(newErrors);
@@ -56,24 +42,37 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(null);
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const result = await login(formData.email, formData.password);
 
-    // Set global auth state
-    login(formData.role as UserRole);
-
-    setIsLoading(false);
-
-    // Redirect based on role
-    if (formData.role === "system_admin") {
-      router.push("/admin");
-    } else {
-      router.push("/dashboard");
+      if (result.user) {
+        setLoginSuccess(true);
+        // Small delay to show success state
+        setTimeout(() => {
+          const role = result.user?.role as any;
+          if (role === "SYSTEM_ADMIN") {
+            router.push("/admin/analytics");
+          } else if (role === "HOSPITAL_ADMIN") {
+            router.push("/admin/analytics");
+          } else if (role === "NURSE") {
+            router.push("/tasks");
+          } else {
+            router.push("/referrals");
+          }
+        }, 800);
+      } else {
+        setAuthError(result.error || "Invalid email or password");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setAuthError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -140,34 +139,23 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) => {
-                  setFormData({ ...formData, role: value });
-                  if (errors.role) setErrors({ ...errors, role: "" });
-                }}
-              >
-                <SelectTrigger
-                  id="role"
-                  className={errors.role ? "border-destructive" : ""}
-                >
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="doctor">Doctor</SelectItem>
-                  <SelectItem value="nurse">Nurse</SelectItem>
-                  <SelectItem value="hospital_admin">Hospital Admin</SelectItem>
-                  <SelectItem value="system_admin">System Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && (
-                <p className="text-xs text-destructive">{errors.role}</p>
-              )}
-            </div>
+          {authError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
 
+          {loginSuccess && (
+            <Alert className="border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>Login successful! Redirecting...</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -236,13 +224,36 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  {loginSuccess ? "Redirecting..." : "Signing in..."}
                 </>
               ) : (
                 "Sign in"
               )}
             </Button>
           </form>
+
+          <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+            <p className="text-xs font-semibold mb-2 uppercase tracking-wider text-muted-foreground">Demo Credentials</p>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div>
+                <p className="font-medium">Doctor:</p>
+                <p className="text-muted-foreground">emily.wilson@centralmed.com</p>
+              </div>
+              <div>
+                <p className="font-medium">Nurse:</p>
+                <p className="text-muted-foreground">jane.miller@centralmed.com</p>
+              </div>
+              <div>
+                <p className="font-medium">Hosp Admin:</p>
+                <p className="text-muted-foreground">admin@centralmed.com</p>
+              </div>
+              <div>
+                <p className="font-medium">Sys Admin:</p>
+                <p className="text-muted-foreground">admin@system.com</p>
+              </div>
+            </div>
+            <p className="text-[10px] mt-2 text-muted-foreground italic">Password: password123</p>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Need access?{" "}

@@ -18,19 +18,34 @@ interface AuthContextType {
     user: User | null;
     userRole: UserRole;
     setUserRole: (role: UserRole) => void;
-    login: (role: UserRole) => void;
+    login: (email: string, password: string) => Promise<{ user: User | null; error?: string }>;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    // Default to doctor for initial state, or try to read from localStorage if we were persisting
+    const [user, setUser] = useState<User | null>(null);
     const [userRole, setUserRoleState] = useState<UserRole>("doctor");
-    const [user, setUser] = useState<User | null>({
-        ...mockUser,
-        role: "doctor" as UserRole, // Cast to ensure type safety
-    });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await fetch("/api/auth/me");
+                const data = await res.json();
+                if (data.user) {
+                    setUser(data.user);
+                    setUserRoleState(data.user.role.toLowerCase() as UserRole);
+                }
+            } catch (error) {
+                console.error("Auth check failed:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        checkAuth();
+    }, []);
 
     const setUserRole = (role: UserRole) => {
         setUserRoleState(role);
@@ -39,20 +54,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const login = (role: UserRole) => {
-        setUserRole(role);
-        // In a real app, we'd fetch user data here
+    const login = async (email: string, password: string): Promise<{ user: User | null; error?: string }> => {
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setUser(data.user);
+                setUserRoleState(data.user.role.toLowerCase() as UserRole);
+                return { user: data.user };
+            } else {
+                return { user: null, error: data.error || "Login failed" };
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            return { user: null, error: "An unexpected error occurred" };
+        }
     };
 
-    const logout = () => {
-        // In a real app, clear tokens etc.
-        // For now, maybe reset to default or null? 
-        // Let's just keep it simple for the UI test
+    const logout = async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            setUser(null);
+            // Redirect to login if needed
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     return (
         <AuthContext.Provider value={{ user, userRole, setUserRole, login, logout }}>
-            {children}
+            {!isLoading && children}
         </AuthContext.Provider>
     );
 }

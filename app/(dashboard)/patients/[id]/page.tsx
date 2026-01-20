@@ -1,13 +1,9 @@
-"use client";
-
-import { useState } from "react";
 import { PageHeader } from "@/components/medical/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Activity,
@@ -15,36 +11,17 @@ import {
   FileText,
   Pill,
   Stethoscope,
-  Clock,
   ShieldAlert,
-  ChevronRight,
   Plus,
   History,
-  User
 } from "lucide-react";
-import { patients } from "@/lib/mock-data";
+import { getPatientById } from "@/app/actions/patients";
 import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
-// Mock data extensions for the profile
-const medicalHistory = [
-  { date: "2024-03-10", diagnosis: "Acute Bronchitis", doctor: "Dr. Wilson", hospital: "General Hospital" },
-  { date: "2023-11-15", diagnosis: "Hypertension (Stage 1)", doctor: "Dr. Chen", hospital: "City Clinic" },
-];
-
-const medications = [
-  { name: "Amoxicillin", dosage: "500mg", freq: "3x daily", status: "Active", prescribed: "2024-03-10" },
-  { name: "Lisinopril", dosage: "10mg", freq: "1x daily", status: "Active", prescribed: "2023-11-15" },
-];
-
-const labResults = [
-  { name: "Complete Blood Count", date: "2024-03-10", status: "Normal" },
-  { name: "Lipid Panel", date: "2023-11-15", status: "Abnormal" },
-];
-
-export default function PatientProfilePage({ params }: { params: { id: string } }) {
-  // In a real app, fetch patient by ID
-  const patient = patients.find(p => p.id === params.id) || patients[0]; // Fallback for demo
+export default async function PatientProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const patient = await getPatientById(id);
 
   if (!patient) return notFound();
 
@@ -69,7 +46,7 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
             <div className="flex items-center gap-2 pt-1">
               <Badge variant="outline" className="gap-1">
                 <Building2Icon className="h-3 w-3" />
-                {patient.hospital}
+                {patient.hospital.name}
               </Badge>
               {patient.status === "Critical" && (
                 <Badge variant="destructive" className="animate-pulse gap-1">
@@ -97,12 +74,16 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
         <Alert variant="destructive" className="bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30">
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>Allergies</AlertTitle>
-          <AlertDescription>Penicillin (Severe), Peanuts (Mild)</AlertDescription>
+          <AlertDescription>
+            {patient.allergies.length > 0 ? patient.allergies.join(", ") : "None reported"}
+          </AlertDescription>
         </Alert>
         <Alert className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30">
           <Activity className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <AlertTitle className="text-amber-800 dark:text-amber-400">Chronic Conditions</AlertTitle>
-          <AlertDescription className="text-amber-700 dark:text-amber-500">Asthma, Type 2 Diabetes</AlertDescription>
+          <AlertDescription className="text-amber-700 dark:text-amber-500">
+            {patient.chronicConditions.length > 0 ? patient.chronicConditions.join(", ") : "None reported"}
+          </AlertDescription>
         </Alert>
       </div>
 
@@ -145,15 +126,18 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {medicalHistory.slice(0, 1).map((item, i) => (
+                {patient.medicalRecords.filter(r => r.type === "Diagnosis").slice(0, 3).map((item, i) => (
                   <div key={i} className="flex justify-between items-start pb-4 border-b last:border-0 last:pb-0">
                     <div>
-                      <p className="font-medium">{item.diagnosis}</p>
-                      <p className="text-sm text-muted-foreground">Diagnosed by {item.doctor}</p>
+                      <p className="font-medium">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">{item.details}</p>
                     </div>
                     <Badge variant="secondary">Active</Badge>
                   </div>
                 ))}
+                {patient.medicalRecords.filter(r => r.type === "Diagnosis").length === 0 && (
+                  <p className="text-sm text-muted-foreground italic">No active diagnoses found.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -165,15 +149,18 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {medications.map((med, i) => (
+                {patient.medicalRecords.filter(r => r.type === "Prescription").map((med, i) => (
                   <div key={i} className="flex justify-between items-center pb-4 border-b last:border-0 last:pb-0">
                     <div>
-                      <p className="font-medium">{med.name} {med.dosage}</p>
-                      <p className="text-xs text-muted-foreground">{med.freq}</p>
+                      <p className="font-medium">{med.title}</p>
+                      <p className="text-xs text-muted-foreground">{med.details}</p>
                     </div>
-                    <Badge variant="outline" className="text-xs">{med.status}</Badge>
+                    <Badge variant="outline" className="text-xs">Active</Badge>
                   </div>
                 ))}
+                {patient.medicalRecords.filter(r => r.type === "Prescription").length === 0 && (
+                  <p className="text-sm text-muted-foreground italic">No active medications found.</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -182,31 +169,49 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
         <TabsContent value="history" className="mt-6">
           <Card>
             <CardContent className="p-0">
-              {medicalHistory.map((item, i) => (
+              {patient.medicalRecords.map((item, i) => (
                 <div key={i} className="flex items-center p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
                   <div className="h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4">
                     <History className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">{item.diagnosis}</p>
+                    <p className="font-medium">{item.title}</p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{item.date}</span>
+                      <span>{new Date(item.date).toLocaleDateString()}</span>
                       <span>•</span>
-                      <span>{item.hospital}</span>
+                      <span>{item.type}</span>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm">View Details</Button>
                 </div>
               ))}
+              {patient.medicalRecords.length === 0 && (
+                <div className="p-8 text-center">
+                  <p className="text-muted-foreground">No medical history found.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="medications" className="mt-6">
-          {/* Reusing similar structure or detailed table */}
           <Card>
             <CardContent className="p-6">
-              <p className="text-muted-foreground text-sm">Detailed medication history would go here...</p>
+              <div className="space-y-4">
+                {patient.medicalRecords.filter(r => r.type === "Prescription").map((med, i) => (
+                  <div key={i} className="flex justify-between items-center pb-4 border-b last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{med.title}</p>
+                      <p className="text-sm text-muted-foreground">{med.details}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Prescribed on {new Date(med.date).toLocaleDateString()}</p>
+                    </div>
+                    <Badge>Active</Badge>
+                  </div>
+                ))}
+                {patient.medicalRecords.filter(r => r.type === "Prescription").length === 0 && (
+                  <p className="text-muted-foreground text-sm italic">No medications found.</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -214,22 +219,25 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
         <TabsContent value="labs" className="mt-6">
           <Card>
             <CardContent className="p-0">
-              {labResults.map((lab, i) => (
+              {patient.medicalRecords.filter(r => r.type === "Lab Result").map((lab, i) => (
                 <div key={i} className="flex items-center p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
                   <div className="h-10 w-10 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 mr-4">
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">{lab.name}</p>
+                    <p className="font-medium">{lab.title}</p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{lab.date}</span>
+                      <span>{new Date(lab.date).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <Badge variant={lab.status === "Normal" ? "secondary" : "destructive"}>
-                    {lab.status}
-                  </Badge>
+                  <Badge variant="secondary">Normal</Badge>
                 </div>
               ))}
+              {patient.medicalRecords.filter(r => r.type === "Lab Result").length === 0 && (
+                <div className="p-8 text-center">
+                  <p className="text-muted-foreground">No lab results found.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,0 +1,351 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+    ArrowLeft,
+    Building2,
+    Calendar,
+    FileText,
+    MessageSquare,
+    Check,
+    X,
+    Activity,
+    AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/medical/status-badge";
+import { ReferralTimeline } from "@/components/medical/referral-timeline";
+import { ConfirmModal } from "@/components/medical/confirm-modal";
+import { useAuth } from "@/context/auth-context";
+import { updateReferralStatus } from "@/app/actions/referrals";
+
+interface Referral {
+    id: string;
+    patientId: string;
+    patientName: string;
+    fromHospital: string;
+    toHospital: string;
+    referringDoctor: string;
+    receivingDoctor: string;
+    status: string;
+    priority: string;
+    reason: string;
+    notes?: string;
+    createdAt: string;
+    timeline: any[];
+    patient: any;
+}
+
+interface ReferralDetailsClientProps {
+    referral: Referral;
+}
+
+export default function ReferralDetailsClient({ referral }: ReferralDetailsClientProps) {
+    const { userRole } = useAuth();
+    const router = useRouter();
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState("");
+
+    const handleAccept = async () => {
+        setIsLoading(true);
+        try {
+            await updateReferralStatus(referral.id, "ACCEPTED");
+            setShowAcceptModal(false);
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to accept referral:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleReject = async () => {
+        if (!rejectionReason.trim()) return;
+
+        setIsLoading(true);
+        try {
+            await updateReferralStatus(referral.id, "REJECTED", rejectionReason);
+            setShowRejectModal(false);
+            setRejectionReason("");
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to reject referral:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => router.back()}
+                        className="shrink-0"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                                Referral {referral.id}
+                            </h1>
+                            <StatusBadge status={referral.status} />
+                            <StatusBadge status={referral.priority} />
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Created on {new Date(referral.createdAt).toLocaleString()}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Action buttons - only show for pending referrals and non-nurses */}
+                {referral.status === "SENT" && userRole !== "nurse" && (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
+                            onClick={() => setShowRejectModal(true)}
+                        >
+                            <X className="mr-2 h-4 w-4" />
+                            Reject
+                        </Button>
+                        <Button onClick={() => setShowAcceptModal(true)}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Accept
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Patient Info */}
+                    <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Patient Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Patient Name</p>
+                                        <Link
+                                            href={`/patients/${referral.patientId}`}
+                                            className="font-medium text-primary hover:underline"
+                                        >
+                                            {referral.patientName}
+                                        </Link>
+                                    </div>
+                                    <div className="flex gap-6">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Age / Gender</p>
+                                            <p className="font-medium text-foreground">
+                                                {referral.patient.age} / {referral.patient.gender}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Status</p>
+                                            <p className="font-medium text-foreground">
+                                                {referral.patient.status}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {referral.patient.allergies.length > 0 && (
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Allergies</p>
+                                            <p className="font-medium text-red-600 dark:text-red-400">
+                                                {referral.patient.allergies.join(", ")}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/patients/${referral.patientId}`}>
+                                        View Patient
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Medical Data Tabs */}
+                    <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Clinical Data</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Reason for Referral</h3>
+                                    <p className="text-base">{referral.reason}</p>
+                                </div>
+
+                                {referral.notes && (
+                                    <div>
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Clinical Notes</h3>
+                                        <div className="bg-muted/30 p-4 rounded-lg text-sm">
+                                            {referral.notes}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t">
+                                    <div>
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Recent Records</h3>
+                                        <ul className="space-y-2 text-sm">
+                                            {referral.patient.medicalRecords.slice(0, 3).map((record: any) => (
+                                                <li key={record.id} className="flex justify-between">
+                                                    <span>{record.title}</span>
+                                                    <span className="text-muted-foreground">{new Date(record.date).toLocaleDateString()}</span>
+                                                </li>
+                                            ))}
+                                            {referral.patient.medicalRecords.length === 0 && (
+                                                <li className="text-muted-foreground italic">No recent records found.</li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Attachments</h3>
+                                        <p className="text-sm text-muted-foreground italic">No attachments provided.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-6">
+                    {/* Transfer Details */}
+                    <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Transfer Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                    <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">From</p>
+                                    <p className="text-sm font-medium">{referral.fromHospital}</p>
+                                    <p className="text-xs text-muted-foreground">{referral.referringDoctor}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                                <div className="h-4 w-0.5 bg-border" />
+                            </div>
+
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                    <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">To</p>
+                                    <p className="text-sm font-medium">{referral.toHospital}</p>
+                                    <p className="text-xs text-muted-foreground">{referral.receivingDoctor}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Timeline */}
+                    <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Status Timeline</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ReferralTimeline events={referral.timeline} />
+                        </CardContent>
+                    </Card>
+
+                    {/* Quick Actions */}
+                    <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Button variant="outline" className="w-full justify-start bg-transparent" asChild>
+                                <Link href="/messages">
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    Message Doctor
+                                </Link>
+                            </Button>
+                            <Button variant="outline" className="w-full justify-start bg-transparent">
+                                <FileText className="mr-2 h-4 w-4" />
+                                Download PDF
+                            </Button>
+                            <Button variant="outline" className="w-full justify-start bg-transparent">
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Schedule Follow-up
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Nursing Actions - Only for Nurses */}
+                    {userRole === "nurse" && (
+                        <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06] border-l-4 border-l-blue-500">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Activity className="h-5 w-5 text-blue-500" />
+                                    Nursing Actions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Button className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200" variant="outline">
+                                    <Activity className="mr-2 h-4 w-4" />
+                                    Update Vitals
+                                </Button>
+                                <Button className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200" variant="outline">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Add Nursing Note
+                                </Button>
+                                <Button className="w-full justify-start bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200" variant="outline">
+                                    <AlertCircle className="mr-2 h-4 w-4" />
+                                    Flag Concern
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            </div>
+
+            {/* Confirmation Modals */}
+            <ConfirmModal
+                open={showAcceptModal}
+                onOpenChange={setShowAcceptModal}
+                title="Accept Referral"
+                description="Are you sure you want to accept this referral? The referring hospital will be notified."
+                confirmLabel="Accept Referral"
+                onConfirm={handleAccept}
+                isLoading={isLoading}
+            />
+
+            <ConfirmModal
+                open={showRejectModal}
+                onOpenChange={setShowRejectModal}
+                title="Reject Referral"
+                description="Please provide a reason for rejecting this referral. This will be sent to the referring doctor."
+                confirmLabel="Reject Referral"
+                onConfirm={handleReject}
+                variant="destructive"
+                isLoading={isLoading}
+                input={true}
+                inputPlaceholder="Reason for rejection (required)"
+                inputValue={rejectionReason}
+                onInputChange={setRejectionReason}
+            />
+        </div>
+    );
+}

@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  SYSTEM_ADMIN
+  HOSPITAL_ADMIN
+  DOCTOR
+  NURSE
+}
+
+enum ReferralStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+enum Priority {
+  NORMAL
+  URGENT
+  EMERGENCY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  CRITICAL
+  DISCHARGED
+}
+
+enum HospitalStatus {
+  CONNECTED
+  PENDING
+  INACTIVE
+}
+
+enum HospitalType {
+  GENERAL
+  SPECIALTY
+  CLINIC
+  REHABILITATION
+}
+
+// Models
+
+model Hospital {
+  id           String         @id @default(uuid())
+  name         String
+  type         HospitalType
+  location     String
+  status       HospitalStatus @default(PENDING)
+  specialties  String[]
+  contactEmail String
+  contactPhone String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  users             User[]
+  patients          Patient[]
+  sentReferrals     Referral[] @relation("SentReferrals")
+  receivedReferrals Referral[] @relation("ReceivedReferrals")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  name       String
+  role       UserRole
+  hospitalId String?
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id])
+  department String?
+  avatar     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sentReferrals     Referral[] @relation("ReferringDoctor")
+  receivedReferrals Referral[] @relation("ReceivingDoctor")
+  messagesSent      Message[]  @relation("Sender")
+  messagesReceived  Message[]  @relation("Receiver")
+  auditLogs         AuditLog[]
+  assignedTasks     Task[]
+  sessions          Session[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Patient {
+  id                String        @id @default(uuid())
+  name              String
+  age               Int
+  gender            Gender
+  hospitalId        String
+  hospital          Hospital      @relation(fields: [hospitalId], references: [id])
+  status            PatientStatus @default(ACTIVE)
+  email             String?
+  phone             String?
+  bloodType         String?
+  allergies         String[]      @default([])
+  chronicConditions String[]      @default([])
+  lastVisit         DateTime
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  emergencyContactName         String?
+  emergencyContactPhone        String?
+  emergencyContactRelationship String?
+
+  referrals      Referral[]
+  medicalRecords MedicalRecord[]
+}
+
+model Referral {
+  id String @id @default(uuid())
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  fromHospitalId String
+  fromHospital   Hospital @relation("SentReferrals", fields: [fromHospitalId], references: [id])
+  toHospitalId   String
+  toHospital     Hospital @relation("ReceivedReferrals", fields: [toHospitalId], references: [id])
+
+  referringDoctorId String
+  referringDoctor   User   @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+  receivingDoctorId String?
+  receivingDoctor   User?  @relation("ReceivingDoctor", fields: [receivingDoctorId], references: [id])
+
+  department String?
+
+  status   ReferralStatus @default(DRAFT)
+  priority Priority       @default(NORMAL)
+
+  reason String
+  notes  String?
+
+  // Emergency Specifics
+  emergencyConfirmed Boolean @default(false)
+  emergencyReason    String?
+  immediateRisks     String?
+
+  // Data Sharing Permissions
+  shareLabResults Boolean @default(true)
+  shareImaging    Boolean @default(false)
+  shareNotes      Boolean @default(true)
+  emergencyAccess Boolean @default(false)
+
+  // Rejection
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeline ReferralEvent[]
+}
+
+model ReferralEvent {
+  id         String   @id @default(uuid())
+  referralId String
+  referral   Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  type       String   // CREATED, SENT, VIEWED, ACCEPTED, REJECTED, COMPLETED, EMERGENCY_FLAG
+  actorId    String
+  actorName  String
+  details    String?
+  timestamp  DateTime @default(now())
+}
+
+model MedicalRecord {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  type       String   // Diagnosis, Lab Result, Procedure, Prescription, Note
+  title      String
+  details    String
+  date       DateTime
+  doctorId   String
+  hospitalId String
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  assigneeId  String
+  assignee    User      @relation(fields: [assigneeId], references: [id])
+  title       String
+  description String?
+  priority    Priority  @default(NORMAL)
+  status      String    @default("PENDING") // PENDING, COMPLETED
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  timestamp DateTime @default(now())
+}

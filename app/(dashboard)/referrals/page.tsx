@@ -1,262 +1,33 @@
-"use client";
-
-import { useState, Suspense } from "react";
-import Link from "next/link";
-import { Plus, Search, Filter, FileText, ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Suspense } from "react";
 import { PageHeader } from "@/components/medical/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatusBadge } from "@/components/medical/status-badge";
-import { EmptyState } from "@/components/medical/empty-state";
-import { referrals, currentUser } from "@/lib/mock-data";
-import { useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { getReferrals } from "@/app/actions/referrals";
+import ReferralsClient from "./referrals-client";
 import Loading from "./loading";
-import { useAuth } from "@/context/auth-context";
 
-export default function ReferralsPage() {
+export default async function ReferralsPage() {
+  const incomingData = await getReferrals("incoming");
+  const outgoingData = await getReferrals("outgoing");
+
+  // Map Prisma data to match frontend expectations
+  const mapReferral = (r: any) => ({
+    ...r,
+    patientName: r.patient.name,
+    fromHospital: r.fromHospital.name,
+    toHospital: r.toHospital.name,
+    referringDoctor: r.referringDoctor.name,
+    receivingDoctor: r.receivingDoctor?.name || "Unassigned",
+    createdAt: r.createdAt.toISOString(),
+  });
+
+  const incoming = incomingData.map(mapReferral);
+  const outgoing = outgoingData.map(mapReferral);
+
   return (
     <Suspense fallback={<Loading />}>
-      <ReferralsContent />
+      <ReferralsClient
+        initialIncoming={incoming as any}
+        initialOutgoing={outgoing as any}
+      />
     </Suspense>
-  );
-}
-
-function ReferralsContent() {
-  const { userRole } = useAuth();
-  const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState("incoming");
-
-  // Mock splitting referrals into incoming/outgoing based on current user's hospital
-  // In a real app, this would be based on API response
-  const incomingReferrals = referrals.filter(r => r.toHospital === currentUser.hospital || r.toHospital === "General Hospital");
-  const outgoingReferrals = referrals.filter(r => r.fromHospital === currentUser.hospital);
-
-  const currentList = activeTab === "incoming" ? incomingReferrals : outgoingReferrals;
-
-  const filteredReferrals = currentList.filter((referral) => {
-    const matchesSearch =
-      referral.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.fromHospital.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.toHospital.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.id.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || referral.status === statusFilter;
-
-    const matchesPriority =
-      priorityFilter === "all" || referral.priority === priorityFilter;
-
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <PageHeader
-          title="Referrals"
-          description="Manage patient transfers and incoming cases"
-        />
-        {userRole !== "nurse" && (
-          <Button asChild className="shrink-0">
-            <Link href="/referrals/create">
-              <Plus className="mr-2 h-4 w-4" />
-              New Referral
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      <Tabs defaultValue="incoming" onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-          <TabsTrigger value="incoming" className="gap-2">
-            <ArrowDownLeft className="h-4 w-4" />
-            Incoming (Inbox)
-            <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {incomingReferrals.filter(r => r.status === "Sent").length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="outgoing" className="gap-2">
-            <ArrowUpRight className="h-4 w-4" />
-            Outgoing (Sent)
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Filters */}
-        <Card className="shadow-sm border-border/40 bg-background/50 backdrop-blur-sm mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-                <Input
-                  placeholder="Search referrals..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-background/50 border-border/50 focus-visible:ring-primary/20 transition-all"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40 bg-background/50 border-border/50 focus:ring-primary/20">
-                  <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Sent">Sent</SelectItem>
-                  <SelectItem value="Accepted">Accepted</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-40 bg-background/50 border-border/50 focus:ring-primary/20">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="Normal">Normal</SelectItem>
-                  <SelectItem value="Urgent">Urgent</SelectItem>
-                  <SelectItem value="Emergency">Emergency</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        <TabsContent value="incoming" className="mt-0">
-          <ReferralList referrals={filteredReferrals} type="incoming" />
-        </TabsContent>
-
-        <TabsContent value="outgoing" className="mt-0">
-          <ReferralList referrals={filteredReferrals} type="outgoing" />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-function ReferralList({ referrals, type }: { referrals: any[], type: "incoming" | "outgoing" }) {
-  const sortedReferrals = [...referrals].sort((a, b) => {
-    // Priority sorting
-    const priorityOrder = { Emergency: 0, Urgent: 1, Normal: 2 };
-    const priorityDiff = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
-
-    if (priorityDiff !== 0) return priorityDiff;
-
-    // Date sorting (newest first)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-
-  if (sortedReferrals.length === 0) {
-    return (
-      <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
-        <CardContent className="py-12">
-          <EmptyState
-            icon={FileText}
-            title={`No ${type} referrals found`}
-            description="Try adjusting your search or filter criteria."
-            action={type === "outgoing" ? {
-              label: "Create Referral",
-              onClick: () => window.location.href = "/referrals/create",
-            } : undefined}
-          />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="grid gap-4">
-      {sortedReferrals.map((referral) => (
-        <Link
-          key={referral.id}
-          href={`/referrals/${referral.id}`}
-          className="group block"
-        >
-          <Card className={cn(
-            "transition-all duration-200 hover:shadow-md border-border/40",
-            referral.priority === "Emergency"
-              ? "border-l-4 border-l-red-500 bg-red-50/10 dark:bg-red-900/10"
-              : "hover:-translate-y-0.5"
-          )}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-foreground flex items-center gap-2">
-                      {referral.patientName}
-                      {referral.priority === "Emergency" && (
-                        <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                      )}
-                    </h3>
-                    <StatusBadge status={referral.priority} size="sm" />
-                    <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded">
-                      {referral.id}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {type === "incoming" ? (
-                      <>
-                        <span className="font-medium text-foreground/80">From: {referral.fromHospital}</span>
-                        <span className="text-muted-foreground/50">•</span>
-                        <span>{referral.referringDoctor}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-medium text-foreground/80">To: {referral.toHospital}</span>
-                        <span className="text-muted-foreground/50">•</span>
-                        <span>{referral.receivingDoctor}</span>
-                      </>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    {referral.reason}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(referral.createdAt).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-3">
-                  <StatusBadge status={referral.status} />
-
-                  {/* Quick Actions for Incoming Pending Referrals */}
-                  {type === "incoming" && referral.status === "Sent" && (
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
-                        Reject
-                      </Button>
-                      <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white">
-                        Accept
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
   );
 }
