@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { patients } from "@/lib/mock-data";
 import Loading from "./loading";
@@ -59,6 +60,9 @@ function CreateReferralForm({ searchParams }: { searchParams: any }) {
     shareNotes: true,
     emergencyAccess: false,
     notes: "",
+    emergencyConfirmed: false,
+    emergencyReason: "",
+    immediateRisks: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,6 +76,12 @@ function CreateReferralForm({ searchParams }: { searchParams: any }) {
       if (!formData.toHospital) newErrors.toHospital = "Destination hospital is required";
       if (!formData.department) newErrors.department = "Department is required";
       if (!formData.reason) newErrors.reason = "Referral reason is required";
+
+      if (formData.priority === "Emergency") {
+        if (!formData.emergencyConfirmed) newErrors.emergencyConfirmed = "You must confirm this is an emergency";
+        if (!formData.emergencyReason) newErrors.emergencyReason = "Emergency reason is required";
+        if (!formData.immediateRisks) newErrors.immediateRisks = "Immediate risks must be documented";
+      }
     }
 
     if (currentStep === 2) {
@@ -241,14 +251,59 @@ function CreateReferralForm({ searchParams }: { searchParams: any }) {
               {errors.reason && <p className="text-xs text-destructive">{errors.reason}</p>}
             </div>
 
+            {/* Emergency Specific Fields */}
             {formData.priority === "Emergency" && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Emergency Referral</AlertTitle>
-                <AlertDescription>
-                  This will trigger immediate alerts at the receiving hospital. Ensure patient is stable for transfer.
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-6 pt-4 border-t border-red-200 dark:border-red-900/30">
+                <Alert variant="destructive" className="bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  <AlertTitle className="text-red-700 dark:text-red-400">Emergency Referral Protocol</AlertTitle>
+                  <AlertDescription className="text-red-600 dark:text-red-300">
+                    This will trigger immediate alerts at the receiving hospital. Ensure patient is stable for transfer.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="emergency-confirm"
+                    checked={formData.emergencyConfirmed}
+                    onCheckedChange={(c) => setFormData({ ...formData, emergencyConfirmed: !!c })}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="emergency-confirm"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I confirm this referral requires immediate attention
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      By checking this, you acknowledge that this case meets emergency criteria.
+                    </p>
+                  </div>
+                </div>
+                {errors.emergencyConfirmed && <p className="text-xs text-destructive">{errors.emergencyConfirmed}</p>}
+
+                <div className="space-y-2">
+                  <Label>Emergency Reason *</Label>
+                  <Input
+                    value={formData.emergencyReason}
+                    onChange={(e) => setFormData({ ...formData, emergencyReason: e.target.value })}
+                    placeholder="e.g. Unstable Angina, Stroke Protocol"
+                    className={errors.emergencyReason ? "border-destructive" : ""}
+                  />
+                  {errors.emergencyReason && <p className="text-xs text-destructive">{errors.emergencyReason}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Immediate Risks *</Label>
+                  <Textarea
+                    value={formData.immediateRisks}
+                    onChange={(e) => setFormData({ ...formData, immediateRisks: e.target.value })}
+                    placeholder="Describe immediate risks to patient life or limb..."
+                    className={errors.immediateRisks ? "border-destructive" : ""}
+                  />
+                  {errors.immediateRisks && <p className="text-xs text-destructive">{errors.immediateRisks}</p>}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -385,6 +440,25 @@ function CreateReferralForm({ searchParams }: { searchParams: any }) {
                 <p className="font-medium">{formData.primaryDiagnosis}</p>
               </div>
             </div>
+
+            {formData.priority === "Emergency" && (
+              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-lg space-y-4">
+                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-semibold">
+                  <AlertTriangle className="h-4 w-4" />
+                  Emergency Protocol Active
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase">Emergency Reason</p>
+                    <p className="text-sm font-medium">{formData.emergencyReason}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-red-600 dark:text-red-300 uppercase">Immediate Risks</p>
+                    <p className="text-sm font-medium">{formData.immediateRisks}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2 pt-4 border-t">
               <p className="text-sm font-medium text-muted-foreground">Data Sharing Permissions</p>

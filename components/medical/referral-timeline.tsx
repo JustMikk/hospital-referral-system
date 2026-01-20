@@ -1,94 +1,153 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import { Check, Clock, Send, X, FileText } from "lucide-react";
+import { Check, Clock, Send, X, FileText, Eye, AlertTriangle } from "lucide-react";
 import type { Referral } from "@/lib/mock-data";
+
+interface TimelineEvent {
+  id: string;
+  type: "created" | "sent" | "viewed" | "accepted" | "rejected" | "completed" | "cancelled" | "emergency_flag";
+  title: string;
+  actor: string;
+  hospital: string;
+  timestamp: string;
+  note?: string;
+}
 
 interface ReferralTimelineProps {
   referral: Referral;
   className?: string;
 }
 
-const statusSteps = [
-  { key: "Draft", label: "Draft Created", icon: FileText },
-  { key: "Sent", label: "Referral Sent", icon: Send },
-  { key: "Accepted", label: "Accepted", icon: Check },
-  { key: "Completed", label: "Completed", icon: Check },
-];
+// Mock events generator based on referral status
+function generateMockEvents(referral: Referral): TimelineEvent[] {
+  const events: TimelineEvent[] = [
+    {
+      id: "1",
+      type: "created",
+      title: "Referral Created",
+      actor: referral.referringDoctor,
+      hospital: referral.fromHospital,
+      timestamp: referral.createdAt,
+    }
+  ];
 
-const rejectedStep = { key: "Rejected", label: "Rejected", icon: X };
+  if (referral.status !== "Draft") {
+    events.unshift({
+      id: "2",
+      type: "sent",
+      title: "Referral Sent",
+      actor: referral.referringDoctor,
+      hospital: referral.fromHospital,
+      timestamp: referral.createdAt, // Simulating same time for mock
+    });
+  }
 
-function getStatusIndex(status: Referral["status"]): number {
-  if (status === "Rejected") return 2;
-  const index = statusSteps.findIndex((s) => s.key === status);
-  return index === -1 ? 0 : index;
+  if (referral.priority === "Emergency") {
+    events.unshift({
+      id: "e1",
+      type: "emergency_flag",
+      title: "Emergency Priority Flagged",
+      actor: referral.referringDoctor,
+      hospital: referral.fromHospital,
+      timestamp: referral.createdAt,
+    });
+  }
+
+  if (referral.status === "Accepted") {
+    events.unshift({
+      id: "3",
+      type: "viewed",
+      title: "Referral Viewed",
+      actor: referral.receivingDoctor,
+      hospital: referral.toHospital,
+      timestamp: referral.updatedAt,
+    });
+    events.unshift({
+      id: "4",
+      type: "accepted",
+      title: "Referral Accepted",
+      actor: referral.receivingDoctor,
+      hospital: referral.toHospital,
+      timestamp: referral.updatedAt,
+    });
+  }
+
+  if (referral.status === "Rejected") {
+    events.unshift({
+      id: "5",
+      type: "rejected",
+      title: "Referral Rejected",
+      actor: referral.receivingDoctor,
+      hospital: referral.toHospital,
+      timestamp: referral.updatedAt,
+      note: "Capacity issue at this time.",
+    });
+  }
+
+  return events;
 }
 
-export function ReferralTimeline({ referral, className }: ReferralTimelineProps) {
-  const currentIndex = getStatusIndex(referral.status);
-  const isRejected = referral.status === "Rejected";
+const eventIcons = {
+  created: FileText,
+  sent: Send,
+  viewed: Eye,
+  accepted: Check,
+  rejected: X,
+  completed: Check,
+  cancelled: X,
+  emergency_flag: AlertTriangle,
+};
 
-  const steps = isRejected
-    ? [...statusSteps.slice(0, 2), rejectedStep]
-    : statusSteps;
+const eventColors = {
+  created: "bg-blue-100 text-blue-600 border-blue-200",
+  sent: "bg-blue-100 text-blue-600 border-blue-200",
+  viewed: "bg-gray-100 text-gray-600 border-gray-200",
+  accepted: "bg-emerald-100 text-emerald-600 border-emerald-200",
+  rejected: "bg-red-100 text-red-600 border-red-200",
+  completed: "bg-emerald-100 text-emerald-600 border-emerald-200",
+  cancelled: "bg-gray-100 text-gray-600 border-gray-200",
+  emergency_flag: "bg-red-100 text-red-600 border-red-200 animate-pulse",
+};
+
+export function ReferralTimeline({ referral, className }: ReferralTimelineProps) {
+  const events = generateMockEvents(referral);
 
   return (
-    <div className={cn("space-y-1", className)}>
-      {steps.map((step, index) => {
-        const isCompleted = index < currentIndex;
-        const isCurrent = index === currentIndex;
-        const isPending = index > currentIndex;
-        const isRejectedStep = step.key === "Rejected" && isRejected;
-        const Icon = step.icon;
+    <div className={cn("space-y-0", className)}>
+      {events.map((event, index) => {
+        const Icon = eventIcons[event.type];
+        const isLast = index === events.length - 1;
 
         return (
-          <div key={step.key} className="flex items-start gap-4">
-            {/* Timeline line and dot */}
-            <div className="flex flex-col items-center">
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all",
-                  isCompleted && "bg-emerald-500 border-emerald-500",
-                  isCurrent && !isRejectedStep && "bg-primary border-primary",
-                  isCurrent && isRejectedStep && "bg-red-500 border-red-500",
-                  isPending && "bg-card border-border"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-4 w-4",
-                    isCompleted && "text-white",
-                    isCurrent && "text-white",
-                    isPending && "text-muted-foreground"
-                  )}
-                />
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    "w-0.5 h-8 my-1",
-                    isCompleted ? "bg-emerald-500" : "bg-border"
-                  )}
-                />
-              )}
+          <div key={event.id} className="flex gap-4 relative pb-8 last:pb-0">
+            {!isLast && (
+              <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-border" />
+            )}
+
+            <div className={cn(
+              "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
+              eventColors[event.type]
+            )}>
+              <Icon className="h-4 w-4" />
             </div>
 
-            {/* Content */}
-            <div className="pt-1 pb-4">
-              <p
-                className={cn(
-                  "font-medium",
-                  isCompleted && "text-foreground",
-                  isCurrent && "text-foreground",
-                  isPending && "text-muted-foreground"
-                )}
-              >
-                {step.label}
-              </p>
-              {isCurrent && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {new Date(referral.updatedAt).toLocaleString()}
-                </p>
+            <div className="flex-1 pt-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                <p className="font-medium text-sm text-foreground">{event.title}</p>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {new Date(event.timestamp).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="mt-1 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground/80">{event.actor}</span>
+                <span className="mx-1">•</span>
+                <span>{event.hospital}</span>
+              </div>
+
+              {event.note && (
+                <div className="mt-2 text-sm bg-muted/50 p-2 rounded border border-border/50">
+                  {event.note}
+                </div>
               )}
             </div>
           </div>

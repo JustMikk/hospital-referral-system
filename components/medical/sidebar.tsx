@@ -20,6 +20,7 @@ import {
   UserCog,
   AlertTriangle,
   ClipboardCheck,
+  BarChart3,
 } from "lucide-react";
 import {
   Tooltip,
@@ -50,6 +51,7 @@ const navItems: NavItem[] = [
   { label: "Staff Mgmt", href: "/staff", icon: Users, roles: ["hospital_admin"] },
   { label: "Departments", href: "/departments", icon: Building2, roles: ["hospital_admin"] },
   { label: "Emergency Access", href: "/emergency-access", icon: AlertTriangle, roles: ["hospital_admin"] },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["hospital_admin", "system_admin"] },
 
   // System Admin Routes (Hidden from Hospital Admin)
   { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["system_admin"] },
