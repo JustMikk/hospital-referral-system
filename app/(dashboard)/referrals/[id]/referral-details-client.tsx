@@ -423,13 +423,61 @@ export default function ReferralDetailsClient({ referral, userHospitalId }: Refe
                                     Message Doctor
                                 </Link>
                             </Button>
-                            <Button variant="outline" className="w-full justify-start bg-transparent">
+                            <Button 
+                                variant="outline" 
+                                className="w-full justify-start bg-transparent"
+                                onClick={() => {
+                                    const content = `
+REFERRAL SUMMARY
+================
+Referral ID: ${referral.id}
+Status: ${referral.status}
+Priority: ${referral.priority}
+Created: ${new Date(referral.createdAt).toLocaleString()}
+
+PATIENT INFORMATION
+-------------------
+Name: ${referral.patientName}
+Age: ${referral.patient.age}
+Gender: ${referral.patient.gender}
+Allergies: ${referral.patient.allergies.join(", ") || "None reported"}
+
+TRANSFER DETAILS
+----------------
+From: ${referral.fromHospital}
+Referring Doctor: ${referral.referringDoctor}
+
+To: ${referral.toHospital}
+Receiving Doctor: ${referral.receivingDoctor}
+
+CLINICAL INFORMATION
+--------------------
+Reason for Referral:
+${referral.reason}
+
+${referral.notes ? `Clinical Notes:\n${referral.notes}` : ""}
+
+Generated on: ${new Date().toLocaleString()}
+                                    `.trim();
+                                    
+                                    const blob = new Blob([content], { type: "text/plain" });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = `referral-${referral.id.slice(0, 8)}-summary.txt`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    toast.success("Referral summary downloaded");
+                                }}
+                            >
                                 <FileText className="mr-2 h-4 w-4" />
-                                Download PDF
+                                Download Summary
                             </Button>
-                            <Button variant="outline" className="w-full justify-start bg-transparent">
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Schedule Follow-up
+                            <Button variant="outline" className="w-full justify-start bg-transparent" asChild>
+                                <Link href={`/patients/${referral.patientId}`}>
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    View Patient Profile
+                                </Link>
                             </Button>
                         </CardContent>
                     </Card>
