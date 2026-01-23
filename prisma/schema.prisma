@@ -91,33 +91,34 @@ model Patient {
 }
 
 model Referral {
-  id                 String          @id @default(uuid())
+  id                 String            @id @default(uuid())
   patientId          String
   fromHospitalId     String
   toHospitalId       String
   referringDoctorId  String
   receivingDoctorId  String?
   department         String?
-  status             ReferralStatus  @default(DRAFT)
-  priority           Priority        @default(NORMAL)
+  status             ReferralStatus    @default(DRAFT)
+  priority           Priority          @default(NORMAL)
   reason             String
   notes              String?
-  emergencyConfirmed Boolean         @default(false)
+  emergencyConfirmed Boolean           @default(false)
   emergencyReason    String?
   immediateRisks     String?
-  shareLabResults    Boolean         @default(true)
-  shareImaging       Boolean         @default(false)
-  shareNotes         Boolean         @default(true)
-  emergencyAccess    Boolean         @default(false)
+  shareLabResults    Boolean           @default(true)
+  shareImaging       Boolean           @default(false)
+  shareNotes         Boolean           @default(true)
+  emergencyAccess    Boolean           @default(false)
   rejectionReason    String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  fromHospital       Hospital        @relation("SentReferrals", fields: [fromHospitalId], references: [id])
-  patient            Patient         @relation(fields: [patientId], references: [id])
-  receivingDoctor    User?           @relation("ReceivingDoctor", fields: [receivingDoctorId], references: [id])
-  referringDoctor    User            @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
-  toHospital         Hospital        @relation("ReceivedReferrals", fields: [toHospitalId], references: [id])
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  fromHospital       Hospital          @relation("SentReferrals", fields: [fromHospitalId], references: [id])
+  patient            Patient           @relation(fields: [patientId], references: [id])
+  receivingDoctor    User?             @relation("ReceivingDoctor", fields: [receivingDoctorId], references: [id])
+  referringDoctor    User              @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+  toHospital         Hospital          @relation("ReceivedReferrals", fields: [toHospitalId], references: [id])
   timeline           ReferralEvent[]
+  attachedDocuments  ReferralDocument[]
 }
 
 model ReferralEvent {
@@ -175,7 +176,7 @@ model Task {
 }
 
 model MedicalDocument {
-  id                  String   @id @default(uuid())
+  id                  String             @id @default(uuid())
   patientId           String
   title               String
   type                String
@@ -183,9 +184,21 @@ model MedicalDocument {
   cloudinaryPublicId  String
   fileSize            Int?
   uploadedById        String
-  createdAt           DateTime @default(now())
-  patient             Patient  @relation(fields: [patientId], references: [id])
-  uploadedBy          User     @relation(fields: [uploadedById], references: [id])
+  createdAt           DateTime           @default(now())
+  patient             Patient            @relation(fields: [patientId], references: [id])
+  uploadedBy          User               @relation(fields: [uploadedById], references: [id])
+  referrals           ReferralDocument[]
+}
+
+model ReferralDocument {
+  id          String          @id @default(uuid())
+  referralId  String
+  documentId  String
+  referral    Referral        @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  document    MedicalDocument @relation(fields: [documentId], references: [id])
+  createdAt   DateTime        @default(now())
+
+  @@unique([referralId, documentId])
 }
 
 model AuditLog {

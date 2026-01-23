@@ -50,17 +50,40 @@ export async function getPatientById(id: string) {
     });
 }
 
-export async function createPatient(data: any) {
+export async function createPatient(data: {
+    name: string;
+    age: number;
+    gender: "MALE" | "FEMALE" | "OTHER";
+    email?: string;
+    phone?: string;
+    bloodType?: string;
+    allergies?: string[];
+    chronicConditions?: string[];
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelationship?: string;
+}) {
     const session = await getSession();
-    if (!session || session.user.role !== "DOCTOR") {
-        throw new Error("Only doctors can create patients");
+    if (!session || !["DOCTOR", "NURSE"].includes(session.user.role)) {
+        throw new Error("Only clinical staff can create patients");
     }
 
     const patient = await prisma.patient.create({
         data: {
-            ...data,
+            name: data.name,
+            age: data.age,
+            gender: data.gender,
+            email: data.email || null,
+            phone: data.phone || null,
+            bloodType: data.bloodType || null,
+            allergies: data.allergies || [],
+            chronicConditions: data.chronicConditions || [],
+            emergencyContactName: data.emergencyContactName || null,
+            emergencyContactPhone: data.emergencyContactPhone || null,
+            emergencyContactRelationship: data.emergencyContactRelationship || null,
             hospitalId: session.user.hospitalId,
             lastVisit: new Date(),
+            status: "ACTIVE",
         },
     });
 

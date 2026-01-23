@@ -59,7 +59,31 @@ export default function AuditLogsClient({ initialLogs }: AuditLogsClientProps) {
                         <CardTitle className="text-lg font-semibold text-card-foreground">
                             Activity Log
                         </CardTitle>
-                        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2 bg-transparent"
+                            onClick={() => {
+                                const csvContent = [
+                                    ["Timestamp", "User", "Role", "Action", "Resource", "Details"].join(","),
+                                    ...filteredLogs.map(log => [
+                                        new Date(log.timestamp).toISOString(),
+                                        log.user.name,
+                                        log.user.role,
+                                        log.action,
+                                        log.resource,
+                                        log.details || ""
+                                    ].map(field => `"${field}"`).join(","))
+                                ].join("\n");
+                                const blob = new Blob([csvContent], { type: "text/csv" });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }}
+                        >
                             <Download className="h-4 w-4" />
                             Export CSV
                         </Button>

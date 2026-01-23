@@ -13,8 +13,6 @@ import {
   MapPin,
   Phone,
   Users,
-  ArrowUpRight,
-  Plus,
 } from "lucide-react";
 import { hospitals } from "@/lib/mock-data";
 import { useSearchParams } from "next/navigation";
@@ -38,13 +36,8 @@ export default function HospitalsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Partner Hospitals"
-          description="View and manage hospital network connections"
-        >
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Hospital
-          </Button>
-        </PageHeader>
+          description="View connected hospitals in our referral network"
+        />
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 sm:max-w-[400px]">
@@ -90,13 +83,6 @@ export default function HospitalsPage() {
                       </Badge>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Button>
                 </div>
 
                 <div className="mt-4 space-y-2">

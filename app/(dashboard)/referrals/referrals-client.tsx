@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Filter, FileText, ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react";
+import { Plus, Search, Filter, FileText, ArrowUpRight, ArrowDownLeft, Clock, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/medical/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import { StatusBadge } from "@/components/medical/status-badge";
 import { EmptyState } from "@/components/medical/empty-state";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { updateReferralStatus } from "@/app/actions/referrals";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Referral {
     id: string;
@@ -150,6 +153,39 @@ export default function ReferralsClient({ initialIncoming, initialOutgoing }: Re
 }
 
 function ReferralList({ referrals, type }: { referrals: any[], type: "incoming" | "outgoing" }) {
+    const router = useRouter();
+    const [processingId, setProcessingId] = useState<string | null>(null);
+
+    const handleAccept = async (e: React.MouseEvent, referralId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setProcessingId(referralId);
+        try {
+            await updateReferralStatus(referralId, "ACCEPTED");
+            toast.success("Referral accepted successfully");
+            router.refresh();
+        } catch (error: any) {
+            toast.error(error.message || "Failed to accept referral");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleReject = async (e: React.MouseEvent, referralId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setProcessingId(referralId);
+        try {
+            await updateReferralStatus(referralId, "REJECTED");
+            toast.success("Referral rejected");
+            router.refresh();
+        } catch (error: any) {
+            toast.error(error.message || "Failed to reject referral");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     const sortedReferrals = [...referrals].sort((a, b) => {
         // Priority sorting
         const priorityOrder = { EMERGENCY: 0, URGENT: 1, NORMAL: 2 };
@@ -205,7 +241,7 @@ function ReferralList({ referrals, type }: { referrals: any[], type: "incoming" 
                                         </h3>
                                         <StatusBadge status={referral.priority} size="sm" />
                                         <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded">
-                                            {referral.id}
+                                            {referral.id.slice(0, 8)}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -244,11 +280,22 @@ function ReferralList({ referrals, type }: { referrals: any[], type: "incoming" 
                                     {/* Quick Actions for Incoming Pending Referrals */}
                                     {type === "incoming" && referral.status === "SENT" && (
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button size="sm" variant="outline" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
-                                                Reject
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline" 
+                                                className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                                onClick={(e) => handleReject(e, referral.id)}
+                                                disabled={processingId === referral.id}
+                                            >
+                                                {processingId === referral.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reject"}
                                             </Button>
-                                            <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white">
-                                                Accept
+                                            <Button 
+                                                size="sm" 
+                                                className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                onClick={(e) => handleAccept(e, referral.id)}
+                                                disabled={processingId === referral.id}
+                                            >
+                                                {processingId === referral.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Accept"}
                                             </Button>
                                         </div>
                                     )}

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, CheckCircle2, AlertTriangle, FileText, Shield, Stethoscope } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, AlertTriangle, FileText, Shield, Stethoscope, Paperclip, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { createReferral } from "@/app/actions/referrals";
+import { getPatientDocuments } from "@/app/actions/documents";
 
 interface Patient {
     id: string;
@@ -56,9 +57,42 @@ export default function CreateReferralClient({ patients, hospitals, preselectedP
         shareLabResults: true,
         shareImaging: false,
         shareNotes: true,
+        attachedDocumentIds: [] as string[],
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [patientDocuments, setPatientDocuments] = useState<any[]>([]);
+    const [loadingDocuments, setLoadingDocuments] = useState(false);
+
+    // Fetch patient documents when patient changes
+    useEffect(() => {
+        async function fetchDocuments() {
+            if (formData.patientId) {
+                setLoadingDocuments(true);
+                try {
+                    const docs = await getPatientDocuments(formData.patientId);
+                    setPatientDocuments(docs);
+                } catch (error) {
+                    console.error("Failed to fetch documents:", error);
+                    setPatientDocuments([]);
+                } finally {
+                    setLoadingDocuments(false);
+                }
+            } else {
+                setPatientDocuments([]);
+            }
+        }
+        fetchDocuments();
+    }, [formData.patientId]);
+
+    const toggleDocument = (documentId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            attachedDocumentIds: prev.attachedDocumentIds.includes(documentId)
+                ? prev.attachedDocumentIds.filter(id => id !== documentId)
+                : [...prev.attachedDocumentIds, documentId]
+        }));
+    };
 
     const validateStep = (currentStep: number) => {
         const newErrors: Record<string, string> = {};
@@ -312,7 +346,70 @@ export default function CreateReferralClient({ patients, hospitals, preselectedP
                         <CardDescription>Control exactly what data is shared with the receiving hospital.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        {/* Attach Documents Section */}
                         <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-medium flex items-center gap-2">
+                                    <Paperclip className="h-4 w-4" />
+                                    Attach Patient Documents
+                                </h3>
+                                {formData.attachedDocumentIds.length > 0 && (
+                                    <Badge variant="secondary">
+                                        {formData.attachedDocumentIds.length} selected
+                                    </Badge>
+                                )}
+                            </div>
+                            
+                            {loadingDocuments ? (
+                                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                    Loading documents...
+                                </div>
+                            ) : patientDocuments.length > 0 ? (
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {patientDocuments.map((doc) => (
+                                        <div
+                                            key={doc.id}
+                                            onClick={() => toggleDocument(doc.id)}
+                                            className={cn(
+                                                "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all",
+                                                formData.attachedDocumentIds.includes(doc.id)
+                                                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                            )}
+                                        >
+                                            <Checkbox
+                                                checked={formData.attachedDocumentIds.includes(doc.id)}
+                                                onCheckedChange={() => toggleDocument(doc.id)}
+                                                className="mt-0.5"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <File className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    <span className="font-medium text-sm truncate">{doc.title}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {doc.type}
+                                                    </Badge>
+                                                    <span>
+                                                        {new Date(doc.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+                                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No documents available for this patient</p>
+                                    <p className="text-xs mt-1">Upload documents from the patient profile to attach them here</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-t pt-6 space-y-4">
                             <h3 className="text-sm font-medium">Include in Referral Package:</h3>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="flex items-center space-x-2 border p-4 rounded-lg">
@@ -407,6 +504,26 @@ export default function CreateReferralClient({ patients, hospitals, preselectedP
                                 {formData.shareNotes && <Badge variant="outline">Clinical Notes</Badge>}
                             </div>
                         </div>
+
+                        {formData.attachedDocumentIds.length > 0 && (
+                            <div className="space-y-2 pt-4 border-t">
+                                <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                    <Paperclip className="h-4 w-4" />
+                                    Attached Documents ({formData.attachedDocumentIds.length})
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                    {patientDocuments
+                                        .filter(doc => formData.attachedDocumentIds.includes(doc.id))
+                                        .map(doc => (
+                                            <Badge key={doc.id} variant="secondary" className="gap-1">
+                                                <File className="h-3 w-3" />
+                                                {doc.title}
+                                            </Badge>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             )}

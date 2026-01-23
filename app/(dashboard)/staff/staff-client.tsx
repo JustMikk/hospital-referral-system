@@ -208,9 +208,9 @@ export default function StaffClient({ initialStaff, departments }: StaffClientPr
                                                     <DropdownMenuItem onClick={() => setSelectedStaff(member)}>
                                                         View Profile
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem>Edit Role</DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-red-600">Deactivate Account</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setSelectedStaff(member)}>
+                                                        Edit Role
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

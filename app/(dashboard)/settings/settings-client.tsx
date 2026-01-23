@@ -314,7 +314,10 @@ export default function SettingsClient({ user, departments }: SettingsClientProp
                             </div>
 
                             <div className="flex justify-end">
-                                <Button className="gap-2">
+                                <Button 
+                                    className="gap-2"
+                                    onClick={() => toast.success("Notification preferences saved (local only)")}
+                                >
                                     <Save className="h-4 w-4" />
                                     Save Preferences
                                 </Button>
@@ -402,30 +405,10 @@ export default function SettingsClient({ user, departments }: SettingsClientProp
                                             <SelectItem value="system">System</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Compact Mode</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Reduce spacing and padding for a more compact view
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Theme changes are applied automatically based on your system settings.
                                     </p>
-                                    <Switch />
                                 </div>
-
-                                <div className="space-y-2">
-                                    <Label>Sidebar Collapsed</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Start with sidebar collapsed by default
-                                    </p>
-                                    <Switch />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <Button className="gap-2">
-                                    <Save className="h-4 w-4" />
-                                    Save Appearance
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>

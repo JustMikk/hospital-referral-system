@@ -55,6 +55,7 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
     const { userRole } = useAuth();
     const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState<any>(null);
     const [newRecord, setNewRecord] = useState({
         type: "Note",
         title: "",
@@ -114,11 +115,6 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2">
-                        <History className="h-4 w-4" />
-                        View History
-                    </Button>
-
                     {(userRole === "doctor" || userRole === "nurse") && (
                         <Dialog open={isAddRecordOpen} onOpenChange={setIsAddRecordOpen}>
                             <DialogTrigger asChild>
@@ -314,7 +310,7 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
                                             <span>{item.type}</span>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="sm">View Details</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedRecord(item)}>View Details</Button>
                                 </div>
                             ))}
                             {patient.medicalRecords.length === 0 && (
@@ -325,6 +321,26 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                {/* Medical Record Details Dialog */}
+                <Dialog open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{selectedRecord?.title}</DialogTitle>
+                            <DialogDescription>
+                                {selectedRecord?.type} • {selectedRecord && new Date(selectedRecord.date).toLocaleDateString()}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <p className="whitespace-pre-wrap">{selectedRecord?.details || "No details available."}</p>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setSelectedRecord(null)}>Close</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 <TabsContent value="medications" className="mt-6">
                     <Card>

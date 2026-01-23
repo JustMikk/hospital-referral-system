@@ -1,10 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/medical/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, ShieldAlert, Eye, Flag } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { AlertTriangle, Clock, ShieldAlert, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -25,6 +34,8 @@ interface EmergencyAccessClientProps {
 }
 
 export default function EmergencyAccessClient({ initialLogs, activeCount }: EmergencyAccessClientProps) {
+    const [selectedLog, setSelectedLog] = useState<EmergencyLog | null>(null);
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -91,12 +102,14 @@ export default function EmergencyAccessClient({ initialLogs, activeCount }: Emer
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" className="gap-2">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="gap-2"
+                                            onClick={() => setSelectedLog(log)}
+                                        >
                                             <Eye className="h-4 w-4" />
                                             Details
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                            <Flag className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </div>
@@ -105,6 +118,64 @@ export default function EmergencyAccessClient({ initialLogs, activeCount }: Emer
                     ))
                 )}
             </div>
+
+            {/* Details Dialog */}
+            <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ShieldAlert className="h-5 w-5 text-red-600" />
+                            Emergency Access Details
+                        </DialogTitle>
+                        <DialogDescription>
+                            Break-glass access record information
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedLog && (
+                        <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Accessed By</p>
+                                    <p className="font-medium">{selectedLog.user}</p>
+                                    <Badge variant="outline" className="mt-1">{selectedLog.role}</Badge>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Patient Record</p>
+                                    <p className="font-medium">{selectedLog.patient}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Reason Provided</p>
+                                <p className="font-medium italic">"{selectedLog.reason}"</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Access Time</p>
+                                    <p className="font-medium">
+                                        {new Date(selectedLog.time).toLocaleString()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Duration</p>
+                                    <p className="font-medium">{selectedLog.duration}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Status</p>
+                                <Badge 
+                                    variant={selectedLog.status === "OPEN" ? "destructive" : "secondary"}
+                                    className="mt-1"
+                                >
+                                    {selectedLog.status === "OPEN" ? "Active Session" : "Session Ended"}
+                                </Badge>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSelectedLog(null)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

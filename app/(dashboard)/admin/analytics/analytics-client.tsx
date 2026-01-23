@@ -83,7 +83,26 @@ export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
                             <SelectItem value="90d">Last Quarter</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" className="gap-2">
+                    <Button 
+                        variant="outline" 
+                        className="gap-2"
+                        onClick={() => {
+                            const exportData = {
+                                metrics: initialData.metrics,
+                                flowData: initialData.flowData,
+                                performanceData: initialData.performanceData,
+                                bottlenecks: initialData.bottlenecks,
+                                exportedAt: new Date().toISOString(),
+                            };
+                            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `analytics-export-${new Date().toISOString().split("T")[0]}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }}
+                    >
                         <Download className="h-4 w-4" />
                         Export
                     </Button>

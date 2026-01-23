@@ -328,7 +328,6 @@ function TaskItem({ task, onToggle, canToggle }: { task: Task, onToggle: () => v
                         {task.patient} • Room {task.room} • Due: {task.time}
                     </p>
                 </div>
-                <Button variant="ghost" size="sm">Details</Button>
             </CardContent>
         </Card>
     );

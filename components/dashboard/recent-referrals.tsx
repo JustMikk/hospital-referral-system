@@ -34,7 +34,7 @@ export function RecentReferrals({ referrals }: RecentReferralsProps) {
             description="Your recent referrals will appear here once you create them."
             action={{
               label: "Create Referral",
-              onClick: () => { },
+              onClick: () => { window.location.href = "/referrals/create"; },
             }}
           />
         </CardContent>

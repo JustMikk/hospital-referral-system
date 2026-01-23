@@ -67,6 +67,17 @@ export async function getReferralById(id: string) {
             timeline: {
                 orderBy: { timestamp: "asc" },
             },
+            attachedDocuments: {
+                include: {
+                    document: {
+                        include: {
+                            uploadedBy: {
+                                select: { name: true },
+                            },
+                        },
+                    },
+                },
+            },
         },
     });
 }
@@ -89,6 +100,7 @@ export async function createReferral(data: any) {
         shareLabResults,
         shareImaging,
         shareNotes,
+        attachedDocumentIds,
     } = data;
 
     const referral = await prisma.referral.create({
@@ -110,6 +122,16 @@ export async function createReferral(data: any) {
         },
     });
 
+    // Attach documents to the referral
+    if (attachedDocumentIds && attachedDocumentIds.length > 0) {
+        await prisma.referralDocument.createMany({
+            data: attachedDocumentIds.map((documentId: string) => ({
+                referralId: referral.id,
+                documentId,
+            })),
+        });
+    }
+
     // Log the creation event
     await prisma.referralEvent.create({
         data: {
@@ -117,7 +139,9 @@ export async function createReferral(data: any) {
             type: "CREATED",
             actorId: session.user.id,
             actorName: session.user.name,
-            details: "Referral created and sent",
+            details: attachedDocumentIds?.length 
+                ? `Referral created with ${attachedDocumentIds.length} attached document(s)` 
+                : "Referral created and sent",
         },
     });
 

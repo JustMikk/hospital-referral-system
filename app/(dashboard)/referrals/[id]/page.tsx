@@ -32,7 +32,15 @@ export default async function ReferralDetailsPage({ params }: ReferralDetailsPag
     timeline: referral.timeline.map(t => ({
       ...t,
       timestamp: t.timestamp.toISOString()
-    }))
+    })),
+    attachedDocuments: referral.attachedDocuments?.map(ad => ({
+      id: ad.document.id,
+      title: ad.document.title,
+      type: ad.document.type,
+      url: ad.document.cloudinaryUrl,
+      uploadedBy: ad.document.uploadedBy.name,
+      createdAt: ad.document.createdAt.toISOString(),
+    })) || [],
   };
 
   return (

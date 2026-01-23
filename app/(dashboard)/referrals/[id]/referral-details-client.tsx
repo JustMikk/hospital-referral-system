@@ -14,6 +14,9 @@ import {
     Activity,
     AlertCircle,
     Loader2,
+    Paperclip,
+    Download,
+    Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +40,15 @@ import { createMedicalRecord } from "@/app/actions/patients";
 import { createTask } from "@/app/actions/tasks";
 import { toast } from "sonner";
 
+interface AttachedDocument {
+    id: string;
+    title: string;
+    type: string;
+    url: string;
+    uploadedBy: string;
+    createdAt: string;
+}
+
 interface Referral {
     id: string;
     patientId: string;
@@ -54,6 +66,7 @@ interface Referral {
     createdAt: string;
     timeline: any[];
     patient: any;
+    attachedDocuments: AttachedDocument[];
 }
 
 interface ReferralDetailsClientProps {
@@ -307,8 +320,44 @@ export default function ReferralDetailsClient({ referral, userHospitalId }: Refe
                                         </ul>
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Attachments</h3>
-                                        <p className="text-sm text-muted-foreground italic">No attachments provided.</p>
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                            <Paperclip className="h-4 w-4" />
+                                            Attachments
+                                        </h3>
+                                        {referral.attachedDocuments && referral.attachedDocuments.length > 0 ? (
+                                            <ul className="space-y-2 text-sm">
+                                                {referral.attachedDocuments.map((doc) => (
+                                                    <li key={doc.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                            <span className="truncate">{doc.title}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                onClick={() => window.open(doc.url, "_blank")}
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                asChild
+                                                            >
+                                                                <a href={doc.url} download={doc.title}>
+                                                                    <Download className="h-3.5 w-3.5" />
+                                                                </a>
+                                                            </Button>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground italic">No attachments provided.</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
