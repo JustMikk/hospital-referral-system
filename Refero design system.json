@@ -1,0 +1,264 @@
+{
+  "meta": {
+    "designStyle": "Modern SaaS Medical Dashboard",
+    "layoutDensity": "Comfortable",
+    "themeVariants": ["light", "dark"],
+    "designPrinciples": [
+      "Card-based layout",
+      "Soft elevation with shadows",
+      "Data-dense but visually calm",
+      "Color-coded metrics",
+      "Rounded UI with subtle gradients"
+    ]
+  },
+
+  "global": {
+    "font": {
+      "family": "Inter, system-ui, sans-serif",
+      "baseSize": "14px",
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      }
+    },
+
+    "borderRadius": {
+      "xs": "6px",
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px",
+      "xl": "20px",
+      "pill": "999px"
+    },
+
+    "shadows": {
+      "cardLight": "0 8px 24px rgba(16, 24, 40, 0.08)",
+      "cardDark": "0 8px 24px rgba(0, 0, 0, 0.45)",
+      "floating": "0 12px 32px rgba(0,0,0,0.12)",
+      "none": "none"
+    },
+
+    "transitions": {
+      "default": "all 0.2s ease",
+      "fast": "all 0.12s ease"
+    }
+  },
+
+  "colors": {
+    "neutral": {
+      "white": "#FFFFFF",
+      "gray50": "#F8FAFC",
+      "gray100": "#F1F5F9",
+      "gray200": "#E2E8F0",
+      "gray300": "#CBD5E1",
+      "gray400": "#94A3B8",
+      "gray500": "#64748B",
+      "gray600": "#475569",
+      "gray700": "#334155",
+      "gray800": "#1E293B",
+      "gray900": "#0F172A",
+      "black": "#020617"
+    },
+
+    "primary": {
+      "blue500": "#2563EB",
+      "blue600": "#1D4ED8",
+      "blue700": "#1E40AF",
+      "blueSoft": "#E0ECFF"
+    },
+
+    "accent": {
+      "purple": "#7C3AED",
+      "orange": "#F97316",
+      "green": "#22C55E",
+      "red": "#EF4444",
+      "teal": "#14B8A6",
+      "cyan": "#38BDF8"
+    },
+
+    "status": {
+      "success": "#22C55E",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#0EA5E9"
+    }
+  },
+
+  "backgrounds": {
+    "app": {
+      "light": "#F1F5F9",
+      "dark": "linear-gradient(180deg, #020617 0%, #020617 100%)"
+    },
+
+    "sidebar": {
+      "light": "#FFFFFF",
+      "dark": "#020617"
+    }
+  },
+
+  "elementStyling": {
+    "cards": {
+      "container": {
+        "background": {
+          "light": "#FFFFFF",
+          "dark": "#020617"
+        },
+        "border": {
+          "light": "none",
+          "dark": "1px solid rgba(255,255,255,0.06)"
+        },
+        "borderRadius": "16px",
+        "shadow": {
+          "light": "0 8px 24px rgba(16,24,40,0.08)",
+          "dark": "0 8px 24px rgba(0,0,0,0.45)"
+        }
+      },
+
+      "metricCard": {
+        "background": {
+          "appointments": "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)",
+          "operations": "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
+          "newPatients": "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+          "earning": "linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%)"
+        },
+        "textColor": "#FFFFFF",
+        "iconContainer": {
+          "background": "rgba(255,255,255,0.18)",
+          "borderRadius": "12px"
+        },
+        "iconFill": "#FFFFFF"
+      }
+    },
+
+    "buttons": {
+      "primary": {
+        "background": "#2563EB",
+        "text": "#FFFFFF",
+        "icon": "#FFFFFF",
+        "border": "none",
+        "borderRadius": "10px",
+        "hover": {
+          "background": "#1D4ED8"
+        },
+        "active": {
+          "background": "#1E40AF"
+        },
+        "disabled": {
+          "background": "#CBD5E1",
+          "text": "#94A3B8"
+        }
+      },
+
+      "secondary": {
+        "background": "#F1F5F9",
+        "text": "#2563EB",
+        "border": "1px solid #E2E8F0",
+        "hover": {
+          "background": "#E0ECFF"
+        }
+      }
+    },
+
+    "icons": {
+      "navigation": {
+        "fill": "#64748B",
+        "activeFill": "#2563EB",
+        "background": "none"
+      },
+
+      "action": {
+        "fill": "#2563EB",
+        "background": "#E0ECFF",
+        "borderRadius": "10px"
+      }
+    },
+
+    "text": {
+      "heading": {
+        "colorLight": "#0F172A",
+        "colorDark": "#F8FAFC"
+      },
+      "body": {
+        "colorLight": "#475569",
+        "colorDark": "#CBD5E1"
+      },
+      "muted": {
+        "colorLight": "#94A3B8",
+        "colorDark": "#64748B"
+      },
+      "accent": {
+        "primary": "#2563EB",
+        "success": "#22C55E",
+        "warning": "#F59E0B",
+        "error": "#EF4444"
+      }
+    },
+
+    "charts": {
+      "line": {
+        "strokeWidth": 3,
+        "dotRadius": 0,
+        "gridColorLight": "#E2E8F0",
+        "gridColorDark": "rgba(255,255,255,0.08)"
+      },
+      "donut": {
+        "trackColor": "#E2E8F0",
+        "centerTextColor": "#0F172A"
+      }
+    },
+
+    "calendar": {
+      "dayDefault": {
+        "text": "#475569"
+      },
+      "dayActive": {
+        "background": "#2563EB",
+        "text": "#FFFFFF",
+        "borderRadius": "50%"
+      },
+      "dotIndicators": {
+        "surgery": "#7C3AED",
+        "polyclinic": "#F97316",
+        "evaluation": "#22C55E"
+      }
+    }
+  },
+
+  "componentStates": {
+    "card": {
+      "default": "static elevation",
+      "hover": {
+        "shadow": "0 12px 32px rgba(0,0,0,0.12)",
+        "transform": "translateY(-2px)"
+      },
+      "active": {
+        "shadow": "0 6px 16px rgba(0,0,0,0.18)"
+      }
+    },
+
+    "sidebarItem": {
+      "default": {
+        "text": "#64748B"
+      },
+      "hover": {
+        "background": "#F1F5F9"
+      },
+      "active": {
+        "background": "#E0ECFF",
+        "text": "#2563EB"
+      }
+    }
+  },
+
+  "DO_NOT_RULES": [
+    "DO NOT apply gradient backgrounds to icons unless explicitly inside metric cards",
+    "DO NOT add shadows to text, icons, or chart elements",
+    "DO NOT use card gradients on standard content cards",
+    "DO NOT use primary button blue for body text",
+    "DO NOT apply hover elevation to charts or tables",
+    "DO NOT mix dark theme shadows with light theme backgrounds",
+    "DO NOT round charts or apply border-radius to SVG paths"
+  ]
+}

@@ -12,17 +12,11 @@ import {
   Legend,
 } from "recharts";
 
-const data = [
-  { month: "Jan", patients: 65, referrals: 28 },
-  { month: "Feb", patients: 78, referrals: 32 },
-  { month: "Mar", patients: 82, referrals: 41 },
-  { month: "Apr", patients: 70, referrals: 35 },
-  { month: "May", patients: 95, referrals: 48 },
-  { month: "Jun", patients: 110, referrals: 52 },
-  { month: "Jul", patients: 98, referrals: 45 },
-];
+interface PatientActivityChartProps {
+  data: { month: string; patients: number; referrals: number }[];
+}
 
-export function PatientActivityChart() {
+export function PatientActivityChart({ data }: PatientActivityChartProps) {
   return (
     <Card className="shadow-[0_8px_24px_rgba(16,24,40,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.45)] dark:border-white/[0.06]">
       <CardHeader className="pb-4">

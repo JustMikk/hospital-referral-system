@@ -1,0 +1,9 @@
+app/(dashboard)/hospitals/page.tsx(42,11): error TS2322: Type '{ title: string; description: string; action: Element; }' is not assignable to type 'IntrinsicAttributes & PageHeaderProps'.
+  Property 'action' does not exist on type 'IntrinsicAttributes & PageHeaderProps'.
+app/(dashboard)/records/page.tsx(106,11): error TS2322: Type '{ title: string; description: string; action: Element; }' is not assignable to type 'IntrinsicAttributes & PageHeaderProps'.
+  Property 'action' does not exist on type 'IntrinsicAttributes & PageHeaderProps'.
+app/(dashboard)/settings/page.tsx(86,77): error TS2339: Property 'department' does not exist on type '{ id: string; name: string; role: "Physician"; email: string; hospital: string; avatar: undefined; }'.
+app/actions/dashboard.ts(24,36): error TS2322: Type '"PENDING"' is not assignable to type 'ReferralStatus'.
+app/actions/tasks.ts(13,13): error TS2353: Object literal may only specify known properties, and 'hospitalId' does not exist in type 'TaskWhereInput'.
+app/actions/tasks.ts(16,13): error TS2353: Object literal may only specify known properties, and 'patient' does not exist in type 'TaskInclude<DefaultArgs>'.
+app/actions/tasks.ts(34,13): error TS2353: Object literal may only specify known properties, and 'completedAt' does not exist in type '(Without<TaskUpdateInput, TaskUncheckedUpdateInput> & TaskUncheckedUpdateInput) | (Without<...> & TaskUpdateInput)'.

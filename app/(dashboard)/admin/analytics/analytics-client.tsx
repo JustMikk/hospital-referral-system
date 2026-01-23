@@ -32,9 +32,21 @@ interface AnalyticsData {
         total: number;
         emergency: number;
     }>;
+    performanceData: Array<{
+        name: string;
+        received: number;
+        accepted: number;
+        rate: number;
+    }>;
     rejectionReasons: Array<{
         name: string;
         value: number;
+    }>;
+    bottlenecks: Array<{
+        dept: string;
+        hospital: string;
+        wait: string;
+        trend: string;
     }>;
 }
 
@@ -138,11 +150,22 @@ export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Hospital Response Times</CardTitle>
-                                <CardDescription>Average time to accept/reject (hours)</CardDescription>
+                                <CardTitle>Hospital Referral Volume</CardTitle>
+                                <CardDescription>Total referrals received by hospital</CardDescription>
                             </CardHeader>
-                            <CardContent className="h-[350px] flex items-center justify-center text-muted-foreground italic">
-                                Detailed hospital-by-hospital performance data coming soon.
+                            <CardContent className="h-[350px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={initialData.performanceData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" />
+                                        <YAxis dataKey="name" type="category" width={100} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }}
+                                            itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                        />
+                                        <Bar dataKey="received" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Received" />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </CardContent>
                         </Card>
 
@@ -151,8 +174,20 @@ export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
                                 <CardTitle>Acceptance Rates</CardTitle>
                                 <CardDescription>Percentage of referrals accepted by hospital</CardDescription>
                             </CardHeader>
-                            <CardContent className="h-[350px] flex items-center justify-center text-muted-foreground italic">
-                                Detailed acceptance rate breakdown coming soon.
+                            <CardContent className="h-[350px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={initialData.performanceData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" domain={[0, 100]} />
+                                        <YAxis dataKey="name" type="category" width={100} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }}
+                                            itemStyle={{ color: 'hsl(var(--foreground))' }}
+                                            formatter={(value) => `${value}%`}
+                                        />
+                                        <Bar dataKey="rate" fill="#10b981" radius={[0, 4, 4, 0]} name="Acceptance Rate (%)" />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </CardContent>
                         </Card>
                     </div>
@@ -199,12 +234,7 @@ export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {[
-                                        { dept: "Cardiology", hospital: "City General", wait: "12.5 hrs", trend: "up" },
-                                        { dept: "Neurology", hospital: "Central Medical", wait: "8.2 hrs", trend: "down" },
-                                        { dept: "Orthopedics", hospital: "St. Mary's", wait: "6.8 hrs", trend: "stable" },
-                                        { dept: "Oncology", hospital: "Memorial", wait: "5.5 hrs", trend: "up" },
-                                    ].map((item, i) => (
+                                    {initialData.bottlenecks.map((item, i) => (
                                         <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
                                             <div>
                                                 <p className="font-medium">{item.dept}</p>

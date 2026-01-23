@@ -103,13 +103,12 @@ export default function RecordsPage() {
         <PageHeader
           title="Medical Records"
           description="Access and manage patient medical records securely"
-          action={
-            <Button className="gap-2">
-              <Upload className="h-4 w-4" />
-              Upload Record
-            </Button>
-          }
-        />
+        >
+          <Button className="gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Record
+          </Button>
+        </PageHeader>
 
         <Card className="border-border bg-card">
           <CardHeader className="pb-4">

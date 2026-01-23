@@ -6,7 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/medical/status-badge";
 import { EmptyState } from "@/components/medical/empty-state";
-import type { Referral } from "@/lib/mock-data";
+interface Referral {
+  id: string;
+  patientName: string;
+  fromHospital: string;
+  toHospital: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+}
 
 interface RecentReferralsProps {
   referrals: Referral[];
@@ -26,7 +34,7 @@ export function RecentReferrals({ referrals }: RecentReferralsProps) {
             description="Your recent referrals will appear here once you create them."
             action={{
               label: "Create Referral",
-              onClick: () => {},
+              onClick: () => { },
             }}
           />
         </CardContent>

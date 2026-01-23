@@ -673,6 +673,7 @@ export const currentUser = {
   role: "Physician" as const,
   email: "emily.wilson@centralmed.com",
   hospital: "Central Medical Center",
+  department: "Cardiology",
   avatar: undefined,
 };
 

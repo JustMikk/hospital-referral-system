@@ -39,13 +39,12 @@ export default function HospitalsPage() {
         <PageHeader
           title="Partner Hospitals"
           description="View and manage hospital network connections"
-          action={
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Hospital
-            </Button>
-          }
-        />
+        >
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Hospital
+          </Button>
+        </PageHeader>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 sm:max-w-[400px]">

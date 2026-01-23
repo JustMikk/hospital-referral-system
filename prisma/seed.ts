@@ -6,6 +6,22 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seeding database...');
 
+    // Clear existing data
+    await prisma.emergencyAccessLog.deleteMany();
+    await prisma.department.deleteMany();
+    await prisma.auditLog.deleteMany();
+    await prisma.appointment.deleteMany();
+    await prisma.task.deleteMany();
+    await prisma.referralEvent.deleteMany();
+    await prisma.referral.deleteMany();
+    await prisma.medicalRecord.deleteMany();
+    await prisma.session.deleteMany();
+    await prisma.patient.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.hospital.deleteMany();
+
+    console.log('🧹 Cleared existing data');
+
     // Create Hospitals
     const centralMedical = await prisma.hospital.create({
         data: {
@@ -191,7 +207,9 @@ async function main() {
     // Create a Task for the nurse
     await prisma.task.create({
         data: {
-            assigneeId: nurseMiller.id,
+            assignedToId: nurseMiller.id,
+            hospitalId: centralMedical.id,
+            patientId: johnSmith.id,
             title: 'Update vitals for John Smith',
             description: 'Check blood pressure, temperature, and heart rate',
             priority: 'NORMAL',
@@ -201,6 +219,132 @@ async function main() {
     });
 
     console.log('✅ Created 1 task');
+
+    // Create Appointments
+    await prisma.appointment.createMany({
+        data: [
+            {
+                patientId: johnSmith.id,
+                doctorId: drWilson.id,
+                hospitalId: centralMedical.id,
+                time: new Date(new Date().setHours(9, 0, 0, 0)),
+                type: 'Follow-up',
+                status: 'SCHEDULED',
+            },
+            {
+                patientId: sarahJohnson.id,
+                doctorId: drWilson.id,
+                hospitalId: centralMedical.id,
+                time: new Date(new Date().setHours(10, 30, 0, 0)),
+                type: 'Consultation',
+                status: 'SCHEDULED',
+            },
+            {
+                patientId: johnSmith.id,
+                doctorId: drWilson.id,
+                hospitalId: centralMedical.id,
+                time: new Date(new Date().setHours(14, 0, 0, 0)),
+                type: 'Lab Test',
+                status: 'IN_PROGRESS',
+            },
+        ],
+    });
+
+    console.log('✅ Created 3 appointments');
+
+    // Create Departments
+    const emergencyDept = await prisma.department.create({
+        data: {
+            name: 'Emergency Medicine',
+            hospitalId: centralMedical.id,
+            headId: nurseMiller.id,
+            status: 'ACTIVE',
+        },
+    });
+
+    const cardiologyDept = await prisma.department.create({
+        data: {
+            name: 'Cardiology',
+            hospitalId: centralMedical.id,
+            headId: drWilson.id,
+            status: 'ACTIVE',
+        },
+    });
+
+    await prisma.department.create({
+        data: {
+            name: 'Pediatrics',
+            hospitalId: centralMedical.id,
+            status: 'ACTIVE',
+        },
+    });
+
+    await prisma.department.create({
+        data: {
+            name: 'Neurology',
+            hospitalId: centralMedical.id,
+            status: 'INACTIVE',
+        },
+    });
+
+    console.log('✅ Created 4 departments');
+
+    // Create Emergency Access Logs
+    await prisma.emergencyAccessLog.create({
+        data: {
+            userId: drWilson.id,
+            patientId: sarahJohnson.id,
+            reason: 'Patient unconscious, unable to consent',
+            startTime: new Date(Date.now() - 10 * 60 * 1000), // 10 mins ago
+            status: 'OPEN',
+        },
+    });
+
+    await prisma.emergencyAccessLog.create({
+        data: {
+            userId: nurseMiller.id,
+            patientId: johnSmith.id,
+            reason: 'Urgent medication verification',
+            startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+            endTime: new Date(Date.now() - 2 * 60 * 60 * 1000 + 15 * 60 * 1000), // 15 mins duration
+            status: 'CLOSED',
+        },
+    });
+
+    console.log('✅ Created 2 emergency access logs');
+
+    // Create Audit Logs for demonstration
+    await prisma.auditLog.create({
+        data: {
+            userId: drWilson.id,
+            action: 'CREATE',
+            resource: 'MedicalRecord',
+            details: 'Created medical record for John Smith',
+            timestamp: new Date(Date.now() - 5 * 60 * 1000),
+        },
+    });
+
+    await prisma.auditLog.create({
+        data: {
+            userId: adminDoe.id,
+            action: 'LOGIN',
+            resource: 'Session',
+            details: 'Login successful',
+            timestamp: new Date(Date.now() - 30 * 60 * 1000),
+        },
+    });
+
+    await prisma.auditLog.create({
+        data: {
+            userId: nurseMiller.id,
+            action: 'UPDATE',
+            resource: 'Task',
+            details: 'Completed task: Update vitals for John Smith',
+            timestamp: new Date(Date.now() - 60 * 60 * 1000),
+        },
+    });
+
+    console.log('✅ Created 3 audit logs');
 
     console.log('🎉 Database seeded successfully!');
 }
