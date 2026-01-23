@@ -18,8 +18,17 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Building2, MapPin, Stethoscope, Share2, UserCog, CheckCircle2, ChevronRight, ChevronLeft } from "lucide-react";
+import { Building2, MapPin, Stethoscope, Share2, UserCog, CheckCircle2, ChevronRight, ChevronLeft, Loader2, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createHospitalWithAdmin } from "@/app/actions/admin";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 const steps = [
     { id: 1, title: "Identity", icon: Building2 },
@@ -33,6 +42,10 @@ const steps = [
 export default function CreateHospitalPage() {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [createdPassword, setCreatedPassword] = useState("");
+    const [copied, setCopied] = useState(false);
     const [formData, setFormData] = useState({
         // Step 1
         name: "",
@@ -55,12 +68,47 @@ export default function CreateHospitalPage() {
         adminEmail: "",
     });
 
-    const handleNext = () => {
+    const copyPassword = () => {
+        navigator.clipboard.writeText(createdPassword);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleNext = async () => {
         if (currentStep < steps.length) {
             setCurrentStep(currentStep + 1);
         } else {
             // Submit
-            router.push("/admin/hospitals");
+            setIsSubmitting(true);
+            try {
+                const typeMap: Record<string, "GENERAL" | "SPECIALTY" | "CLINIC" | "REHABILITATION"> = {
+                    public: "GENERAL",
+                    private: "CLINIC",
+                    specialty: "SPECIALTY",
+                };
+
+                const result = await createHospitalWithAdmin({
+                    hospital: {
+                        name: formData.name,
+                        type: typeMap[formData.type] || "GENERAL",
+                        location: formData.address,
+                        departments: formData.departments,
+                        contactEmail: formData.email,
+                        contactPhone: formData.phone,
+                    },
+                    admin: {
+                        name: formData.adminName,
+                        email: formData.adminEmail,
+                    },
+                });
+
+                setCreatedPassword(result.defaultPassword);
+                setShowSuccess(true);
+            } catch (error: any) {
+                toast.error(error.message || "Failed to create hospital");
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -349,17 +397,80 @@ export default function CreateHospitalPage() {
                     <Button
                         variant="outline"
                         onClick={handleBack}
-                        disabled={currentStep === 1}
+                        disabled={currentStep === 1 || isSubmitting}
                     >
                         <ChevronLeft className="mr-2 h-4 w-4" />
                         Back
                     </Button>
-                    <Button onClick={handleNext}>
-                        {currentStep === steps.length ? "Create Hospital" : "Next Step"}
-                        {currentStep !== steps.length && <ChevronRight className="ml-2 h-4 w-4" />}
+                    <Button onClick={handleNext} disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating...
+                            </>
+                        ) : currentStep === steps.length ? (
+                            "Create Hospital"
+                        ) : (
+                            <>
+                                Next Step
+                                <ChevronRight className="ml-2 h-4 w-4" />
+                            </>
+                        )}
                     </Button>
                 </CardFooter>
             </Card>
+
+            {/* Success Dialog */}
+            <Dialog open={showSuccess} onOpenChange={() => {}}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-600">
+                            <CheckCircle2 className="h-5 w-5" />
+                            Hospital Created Successfully!
+                        </DialogTitle>
+                        <DialogDescription>
+                            The hospital and admin account have been created.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-2">
+                                Admin Account Details
+                            </p>
+                            <div className="space-y-2 text-sm">
+                                <p><span className="text-muted-foreground">Email:</span> {formData.adminEmail}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Password:</span>
+                                    <code className="px-2 py-0.5 bg-background rounded font-mono text-sm">
+                                        {createdPassword}
+                                    </code>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={copyPassword}
+                                    >
+                                        {copied ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                        ) : (
+                                            <Copy className="h-3 w-3" />
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Please save these credentials and share them securely with the hospital administrator.
+                            They should change the password after their first login.
+                        </p>
+                    </div>
+                    <div className="flex justify-end">
+                        <Button onClick={() => router.push("/admin/hospitals")}>
+                            Go to Hospitals
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

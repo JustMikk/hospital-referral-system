@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Search, MessageSquare } from "lucide-react";
+import { Send, Paperclip, Search, MessageSquare, User } from "lucide-react";
 import { PageHeader } from "@/components/medical/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
 import { sendMessage, markMessagesAsRead } from "@/app/actions/messages";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { NewMessageDialog } from "@/components/medical/new-message-dialog";
 
 interface Message {
   id: string;
@@ -112,15 +113,20 @@ export default function MessagesClient({ initialConversations, currentUserId }: 
     }
   };
 
+  const existingConversationIds = initialConversations.map((c) => c.id);
+
   return (
-    <div className="space-y-6">
+    <div className="h-[calc(100vh-64px-48px)] flex flex-col">
       <PageHeader
         title="Messages"
         description="Secure communication with other healthcare providers"
-      />
+        className="shrink-0"
+      >
+        <NewMessageDialog existingConversationIds={existingConversationIds} />
+      </PageHeader>
 
-      <Card className="shadow-sm border-border/40 overflow-hidden bg-background/50 backdrop-blur-xl">
-        <div className="flex h-[calc(100vh-220px)] min-h-[600px]">
+      <Card className="mt-4 flex-1 shadow-sm border-border/40 overflow-hidden bg-background/50 backdrop-blur-xl">
+        <div className="flex h-full">
           {/* Conversation List */}
           <div className="w-80 border-r border-border flex flex-col">
             {/* Search */}

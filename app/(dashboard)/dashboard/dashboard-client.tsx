@@ -29,6 +29,9 @@ export default function DashboardClient({ data }: DashboardClientProps) {
 }
 
 function ClinicalDashboard({ data }: { data: any }) {
+    const { userRole } = useAuth();
+    const isDoctor = userRole === "doctor";
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -49,21 +52,18 @@ function ClinicalDashboard({ data }: { data: any }) {
                     value={data.metrics.totalPatients}
                     icon={Users}
                     variant="purple"
-                    trend={{ value: 12, label: "from last month" }}
                 />
                 <StatCard
                     title="Active Referrals"
                     value={data.metrics.activeReferrals}
                     icon={FileText}
                     variant="orange"
-                    trend={{ value: 8, label: "from last week" }}
                 />
                 <StatCard
                     title="Pending Reviews"
                     value={data.metrics.pendingReviews}
                     icon={Clock}
                     variant="green"
-                    trend={{ value: -5, label: "from yesterday" }}
                 />
                 <StatCard
                     title="Emergency Alerts"
@@ -81,7 +81,7 @@ function ClinicalDashboard({ data }: { data: any }) {
                 </div>
 
                 <div className="space-y-6">
-                    <TodaysAppointments appointments={data.appointments} />
+                    {isDoctor && <TodaysAppointments appointments={data.appointments} />}
                     <PatientActivityChart data={data.chartData} />
                 </div>
             </div>
@@ -117,7 +117,6 @@ function HospitalAdminDashboard({ data }: { data: any }) {
                     value={data.staffCount}
                     icon={UserCog}
                     variant="blue"
-                    trend={{ value: 2, label: "new this month" }}
                 />
                 <StatCard
                     title="Total Patients"

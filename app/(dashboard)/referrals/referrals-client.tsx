@@ -43,7 +43,7 @@ export default function ReferralsClient({ initialIncoming, initialOutgoing }: Re
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [priorityFilter, setPriorityFilter] = useState<string>("all");
-    const [activeTab, setActiveTab] = useState("incoming");
+    const [activeTab, setActiveTab] = useState("outgoing");
 
     const currentList = activeTab === "incoming" ? initialIncoming : initialOutgoing;
 

@@ -41,8 +41,9 @@ export async function inviteStaff(data: { name: string; email: string; role: str
         throw new Error("User with this email already exists");
     }
 
-    // In a real app, we would send an email. For now, we'll just create the user with a default password.
-    const hashedPassword = await bcrypt.hash("password123", 10);
+    // Default password for new staff accounts
+    const DEFAULT_PASSWORD = "Welcome123!";
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
     const user = await prisma.user.create({
         data: {
@@ -76,4 +77,25 @@ export async function updateStaffRole(userId: string, role: string) {
 
     revalidatePath("/staff");
     return user;
+}
+
+// Get nurses for task assignment
+export async function getNursesForAssignment() {
+    const session = await getSession();
+    if (!session || (session.user.role !== "DOCTOR" && session.user.role !== "NURSE")) {
+        throw new Error("Unauthorized");
+    }
+
+    return await prisma.user.findMany({
+        where: {
+            hospitalId: session.user.hospitalId,
+            role: "NURSE",
+        },
+        select: {
+            id: true,
+            name: true,
+            department: true,
+        },
+        orderBy: { name: "asc" },
+    });
 }

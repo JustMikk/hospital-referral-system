@@ -5,29 +5,30 @@ import { getSession } from "@/lib/auth";
 
 export async function getAnalytics() {
     const session = await getSession();
-    if (!session || (session.user.role !== "hospital_admin" && session.user.role !== "system_admin")) {
+    if (!session || !["HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(session.user.role)) {
         throw new Error("Unauthorized");
     }
 
     const hospitalId = session.user.hospitalId;
+    const isSystemAdmin = session.user.role === "SYSTEM_ADMIN";
+
+    // Build where clause based on role
+    const hospitalFilter = isSystemAdmin ? {} : {
+        OR: [
+            { fromHospitalId: hospitalId },
+            { toHospitalId: hospitalId },
+        ],
+    };
 
     // Total Referrals
     const totalReferrals = await prisma.referral.count({
-        where: {
-            OR: [
-                { fromHospitalId: hospitalId },
-                { toHospitalId: hospitalId },
-            ],
-        },
+        where: hospitalFilter,
     });
 
     // Emergency Cases
     const emergencyCases = await prisma.referral.count({
         where: {
-            OR: [
-                { fromHospitalId: hospitalId },
-                { toHospitalId: hospitalId },
-            ],
+            ...hospitalFilter,
             priority: "EMERGENCY",
         },
     });
@@ -35,10 +36,7 @@ export async function getAnalytics() {
     // Average Response Time
     const terminalReferrals = await prisma.referral.findMany({
         where: {
-            OR: [
-                { fromHospitalId: hospitalId },
-                { toHospitalId: hospitalId },
-            ],
+            ...hospitalFilter,
             status: { in: ["ACCEPTED", "REJECTED", "COMPLETED"] },
         },
         select: {
@@ -86,10 +84,7 @@ export async function getAnalytics() {
 
         const count = await prisma.referral.count({
             where: {
-                OR: [
-                    { fromHospitalId: hospitalId },
-                    { toHospitalId: hospitalId },
-                ],
+                ...hospitalFilter,
                 createdAt: {
                     gte: start,
                     lt: end,
@@ -99,10 +94,7 @@ export async function getAnalytics() {
 
         const emergency = await prisma.referral.count({
             where: {
-                OR: [
-                    { fromHospitalId: hospitalId },
-                    { toHospitalId: hospitalId },
-                ],
+                ...hospitalFilter,
                 priority: "EMERGENCY",
                 createdAt: {
                     gte: start,
@@ -120,20 +112,14 @@ export async function getAnalytics() {
 
     const acceptedCount = await prisma.referral.count({
         where: {
-            OR: [
-                { fromHospitalId: hospitalId },
-                { toHospitalId: hospitalId },
-            ],
+            ...hospitalFilter,
             status: "ACCEPTED",
         },
     });
 
     const rejectedReferrals = await prisma.referral.findMany({
         where: {
-            OR: [
-                { fromHospitalId: hospitalId },
-                { toHospitalId: hospitalId },
-            ],
+            ...hospitalFilter,
             status: "REJECTED",
             rejectionReason: { not: null },
         },
@@ -151,6 +137,39 @@ export async function getAnalytics() {
         value,
     }));
 
+    // Calculate bottlenecks based on pending referrals by department
+    const pendingReferrals = await prisma.referral.findMany({
+        where: {
+            ...hospitalFilter,
+            status: "SENT",
+        },
+        include: {
+            toHospital: true,
+            referringDoctor: true,
+        },
+    });
+
+    const deptStats: Record<string, { hospital: string; totalWait: number; count: number }> = {};
+    pendingReferrals.forEach(ref => {
+        const dept = ref.referringDoctor.department || "General";
+        const waitTime = Date.now() - ref.createdAt.getTime();
+        if (!deptStats[dept]) {
+            deptStats[dept] = { hospital: ref.toHospital.name, totalWait: 0, count: 0 };
+        }
+        deptStats[dept].totalWait += waitTime;
+        deptStats[dept].count++;
+    });
+
+    const bottlenecks = Object.entries(deptStats)
+        .map(([dept, stats]) => ({
+            dept,
+            hospital: stats.hospital,
+            wait: `${(stats.totalWait / stats.count / (1000 * 60 * 60)).toFixed(1)} hrs`,
+            trend: "stable" as const,
+        }))
+        .sort((a, b) => parseFloat(b.wait) - parseFloat(a.wait))
+        .slice(0, 4);
+
     return {
         metrics: {
             totalReferrals,
@@ -163,11 +182,8 @@ export async function getAnalytics() {
         rejectionReasons: rejectionReasons.length > 0 ? rejectionReasons : [
             { name: "No Data", value: 1 },
         ],
-        bottlenecks: [
-            { dept: "Cardiology", hospital: "City General", wait: "12.5 hrs", trend: "up" },
-            { dept: "Neurology", hospital: "Central Medical", wait: "8.2 hrs", trend: "down" },
-            { dept: "Orthopedics", hospital: "St. Mary's", wait: "6.8 hrs", trend: "stable" },
-            { dept: "Oncology", hospital: "Memorial", wait: "5.5 hrs", trend: "up" },
+        bottlenecks: bottlenecks.length > 0 ? bottlenecks : [
+            { dept: "No pending referrals", hospital: "-", wait: "-", trend: "stable" },
         ],
     };
 }

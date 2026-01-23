@@ -13,6 +13,7 @@ import {
     X,
     Activity,
     AlertCircle,
+    Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,20 @@ import { ReferralTimeline } from "@/components/medical/referral-timeline";
 import { ConfirmModal } from "@/components/medical/confirm-modal";
 import { useAuth } from "@/context/auth-context";
 import { updateReferralStatus } from "@/app/actions/referrals";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { createMedicalRecord } from "@/app/actions/patients";
+import { createTask } from "@/app/actions/tasks";
+import { toast } from "sonner";
 
 interface Referral {
     id: string;
@@ -28,6 +43,8 @@ interface Referral {
     patientName: string;
     fromHospital: string;
     toHospital: string;
+    fromHospitalId: string;
+    toHospitalId: string;
     referringDoctor: string;
     receivingDoctor: string;
     status: string;
@@ -41,15 +58,26 @@ interface Referral {
 
 interface ReferralDetailsClientProps {
     referral: Referral;
+    userHospitalId: string;
 }
 
-export default function ReferralDetailsClient({ referral }: ReferralDetailsClientProps) {
+export default function ReferralDetailsClient({ referral, userHospitalId }: ReferralDetailsClientProps) {
     const { userRole } = useAuth();
+    const isReceivingHospital = userHospitalId === referral.toHospitalId;
     const router = useRouter();
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
+
+    // Nurse action states
+    const [showVitalsModal, setShowVitalsModal] = useState(false);
+    const [showNoteModal, setShowNoteModal] = useState(false);
+    const [showConcernModal, setShowConcernModal] = useState(false);
+    const [isNurseActionLoading, setIsNurseActionLoading] = useState(false);
+    const [vitalsData, setVitalsData] = useState({ bp: "", temp: "", pulse: "", respRate: "" });
+    const [nursingNote, setNursingNote] = useState("");
+    const [concernDetails, setConcernDetails] = useState("");
 
     const handleAccept = async () => {
         setIsLoading(true);
@@ -80,6 +108,70 @@ export default function ReferralDetailsClient({ referral }: ReferralDetailsClien
         }
     };
 
+    // Nurse action handlers
+    const handleUpdateVitals = async () => {
+        setIsNurseActionLoading(true);
+        try {
+            const vitalsText = `BP: ${vitalsData.bp}, Temp: ${vitalsData.temp}°F, Pulse: ${vitalsData.pulse} bpm, Resp Rate: ${vitalsData.respRate}/min`;
+            await createMedicalRecord({
+                patientId: referral.patientId,
+                type: "Note",
+                title: "Vital Signs Update",
+                details: vitalsText,
+            });
+            toast.success("Vitals updated successfully");
+            setShowVitalsModal(false);
+            setVitalsData({ bp: "", temp: "", pulse: "", respRate: "" });
+            router.refresh();
+        } catch (error) {
+            toast.error("Failed to update vitals");
+        } finally {
+            setIsNurseActionLoading(false);
+        }
+    };
+
+    const handleAddNursingNote = async () => {
+        if (!nursingNote.trim()) return;
+        setIsNurseActionLoading(true);
+        try {
+            await createMedicalRecord({
+                patientId: referral.patientId,
+                type: "Note",
+                title: "Nursing Note",
+                details: nursingNote,
+            });
+            toast.success("Nursing note added successfully");
+            setShowNoteModal(false);
+            setNursingNote("");
+            router.refresh();
+        } catch (error) {
+            toast.error("Failed to add nursing note");
+        } finally {
+            setIsNurseActionLoading(false);
+        }
+    };
+
+    const handleFlagConcern = async () => {
+        if (!concernDetails.trim()) return;
+        setIsNurseActionLoading(true);
+        try {
+            await createTask({
+                title: `Concern: ${referral.patientName}`,
+                description: concernDetails,
+                priority: "URGENT",
+                patientId: referral.patientId,
+            });
+            toast.success("Concern flagged - Task created");
+            setShowConcernModal(false);
+            setConcernDetails("");
+            router.refresh();
+        } catch (error) {
+            toast.error("Failed to flag concern");
+        } finally {
+            setIsNurseActionLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -107,8 +199,8 @@ export default function ReferralDetailsClient({ referral }: ReferralDetailsClien
                     </div>
                 </div>
 
-                {/* Action buttons - only show for pending referrals and non-nurses */}
-                {referral.status === "SENT" && userRole !== "nurse" && (
+                {/* Action buttons - only show for pending referrals, non-nurses, and receiving hospital */}
+                {referral.status === "SENT" && userRole !== "nurse" && isReceivingHospital && (
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
@@ -303,15 +395,27 @@ export default function ReferralDetailsClient({ referral }: ReferralDetailsClien
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                <Button className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200" variant="outline">
+                                <Button
+                                    className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                    variant="outline"
+                                    onClick={() => setShowVitalsModal(true)}
+                                >
                                     <Activity className="mr-2 h-4 w-4" />
                                     Update Vitals
                                 </Button>
-                                <Button className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200" variant="outline">
+                                <Button
+                                    className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                    variant="outline"
+                                    onClick={() => setShowNoteModal(true)}
+                                >
                                     <FileText className="mr-2 h-4 w-4" />
                                     Add Nursing Note
                                 </Button>
-                                <Button className="w-full justify-start bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200" variant="outline">
+                                <Button
+                                    className="w-full justify-start bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
+                                    variant="outline"
+                                    onClick={() => setShowConcernModal(true)}
+                                >
                                     <AlertCircle className="mr-2 h-4 w-4" />
                                     Flag Concern
                                 </Button>
@@ -346,6 +450,149 @@ export default function ReferralDetailsClient({ referral }: ReferralDetailsClien
                 inputValue={rejectionReason}
                 onInputChange={setRejectionReason}
             />
+
+            {/* Nurse Action Dialogs */}
+            <Dialog open={showVitalsModal} onOpenChange={setShowVitalsModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Update Vital Signs</DialogTitle>
+                        <DialogDescription>
+                            Record the patient's current vital signs
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="bp">Blood Pressure</Label>
+                                <Input
+                                    id="bp"
+                                    placeholder="120/80"
+                                    value={vitalsData.bp}
+                                    onChange={(e) => setVitalsData({ ...vitalsData, bp: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="temp">Temperature (°F)</Label>
+                                <Input
+                                    id="temp"
+                                    placeholder="98.6"
+                                    value={vitalsData.temp}
+                                    onChange={(e) => setVitalsData({ ...vitalsData, temp: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pulse">Pulse (bpm)</Label>
+                                <Input
+                                    id="pulse"
+                                    placeholder="72"
+                                    value={vitalsData.pulse}
+                                    onChange={(e) => setVitalsData({ ...vitalsData, pulse: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="respRate">Respiratory Rate</Label>
+                                <Input
+                                    id="respRate"
+                                    placeholder="16"
+                                    value={vitalsData.respRate}
+                                    onChange={(e) => setVitalsData({ ...vitalsData, respRate: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowVitalsModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdateVitals} disabled={isNurseActionLoading}>
+                            {isNurseActionLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Save Vitals"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={showNoteModal} onOpenChange={setShowNoteModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Nursing Note</DialogTitle>
+                        <DialogDescription>
+                            Add observation or care notes for this patient
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="Enter your nursing notes here..."
+                            value={nursingNote}
+                            onChange={(e) => setNursingNote(e.target.value)}
+                            rows={4}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowNoteModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleAddNursingNote} disabled={isNurseActionLoading || !nursingNote.trim()}>
+                            {isNurseActionLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Add Note"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={showConcernModal} onOpenChange={setShowConcernModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-amber-600">Flag a Concern</DialogTitle>
+                        <DialogDescription>
+                            This will create an urgent task for the care team
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="Describe the concern in detail..."
+                            value={concernDetails}
+                            onChange={(e) => setConcernDetails(e.target.value)}
+                            rows={4}
+                            className="border-amber-200 focus-visible:ring-amber-500"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowConcernModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleFlagConcern}
+                            disabled={isNurseActionLoading || !concernDetails.trim()}
+                            className="bg-amber-600 hover:bg-amber-700"
+                        >
+                            {isNurseActionLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <AlertCircle className="mr-2 h-4 w-4" />
+                                    Flag Concern
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

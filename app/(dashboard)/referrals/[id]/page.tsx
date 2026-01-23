@@ -1,12 +1,16 @@
 import { getReferralById } from "@/app/actions/referrals";
+import { getSession } from "@/lib/auth";
 import ReferralDetailsClient from "./referral-details-client";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 interface ReferralDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function ReferralDetailsPage({ params }: ReferralDetailsPageProps) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
   const { id } = await params;
   const referral = await getReferralById(id);
 
@@ -20,6 +24,8 @@ export default async function ReferralDetailsPage({ params }: ReferralDetailsPag
     patientName: referral.patient.name,
     fromHospital: referral.fromHospital.name,
     toHospital: referral.toHospital.name,
+    fromHospitalId: referral.fromHospitalId,
+    toHospitalId: referral.toHospitalId,
     referringDoctor: referral.referringDoctor.name,
     receivingDoctor: referral.receivingDoctor?.name || "Unassigned",
     createdAt: referral.createdAt.toISOString(),
@@ -29,5 +35,10 @@ export default async function ReferralDetailsPage({ params }: ReferralDetailsPag
     }))
   };
 
-  return <ReferralDetailsClient referral={mappedReferral as any} />;
+  return (
+    <ReferralDetailsClient
+      referral={mappedReferral as any}
+      userHospitalId={session.user.hospitalId}
+    />
+  );
 }

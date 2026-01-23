@@ -9,13 +9,24 @@ export async function getTasks() {
     const session = await getSession();
     if (!session) throw new Error("Unauthorized");
 
+    // Nurses only see tasks assigned to them
+    // Doctors see all tasks
+    const whereClause: any = {
+        hospitalId: session.user.hospitalId,
+    };
+
+    if (session.user.role === "NURSE") {
+        whereClause.assignedToId = session.user.id;
+    }
+
     return await prisma.task.findMany({
-        where: {
-            hospitalId: session.user.hospitalId,
-        },
+        where: whereClause,
         include: {
             patient: true,
             assignedTo: true,
+            assignedBy: {
+                select: { name: true, role: true },
+            },
         },
         orderBy: [
             { priority: "desc" },
@@ -42,16 +53,32 @@ export async function updateTaskStatus(id: string, status: "PENDING" | "COMPLETE
     return task;
 }
 
-export async function createTask(data: any) {
+export async function createTask(data: {
+    title: string;
+    description?: string;
+    priority?: "NORMAL" | "URGENT" | "EMERGENCY";
+    patientId?: string;
+    assignedToId?: string;
+    dueDate?: string;
+}) {
     const session = await getSession();
     if (!session || (session.user.role !== "DOCTOR" && session.user.role !== "NURSE")) {
         throw new Error("Only doctors and nurses can create tasks");
     }
 
+    // If nurse creates task, it's a self-assignment
+    const assignedToId = data.assignedToId || (session.user.role === "NURSE" ? session.user.id : undefined);
+
     const task = await prisma.task.create({
         data: {
-            ...data,
-            hospitalId: session.user.hospitalId,
+            title: data.title,
+            description: data.description,
+            priority: data.priority || "NORMAL",
+            patientId: data.patientId || undefined,
+            assignedToId,
+            assignedById: session.user.id,
+            dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+            hospitalId: session.user.hospitalId!,
         },
     });
 

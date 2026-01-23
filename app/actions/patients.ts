@@ -35,6 +35,14 @@ export async function getPatientById(id: string) {
             medicalRecords: {
                 orderBy: { date: "desc" },
             },
+            medicalDocuments: {
+                include: {
+                    uploadedBy: {
+                        select: { name: true, role: true },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+            },
             referrals: {
                 orderBy: { createdAt: "desc" },
             },

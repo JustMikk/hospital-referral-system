@@ -6,6 +6,71 @@ import { revalidatePath } from "next/cache";
 
 const ALLOWED_ROLES = ["DOCTOR", "NURSE"];
 
+// Get staff members available for messaging (doctors and nurses, excluding current user)
+export async function getAvailableStaff() {
+    const session = await getSession();
+    if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
+        throw new Error("Unauthorized");
+    }
+
+    const staff = await prisma.user.findMany({
+        where: {
+            role: { in: ["DOCTOR", "NURSE"] },
+            id: { not: session.user.id },
+        },
+        select: {
+            id: true,
+            name: true,
+            role: true,
+            department: true,
+            hospital: {
+                select: { name: true },
+            },
+        },
+        orderBy: [
+            { hospital: { name: "asc" } },
+            { name: "asc" },
+        ],
+    });
+
+    return staff.map((s) => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        department: s.department || "General",
+        hospital: s.hospital?.name || "Unknown Hospital",
+    }));
+}
+
+// Start a new conversation or send to existing one
+export async function startConversation(receiverId: string, content: string) {
+    const session = await getSession();
+    if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
+        throw new Error("Unauthorized");
+    }
+
+    // Verify the receiver exists and is allowed to receive messages
+    const receiver = await prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { id: true, role: true },
+    });
+
+    if (!receiver || !ALLOWED_ROLES.includes(receiver.role)) {
+        throw new Error("Invalid recipient");
+    }
+
+    const message = await prisma.message.create({
+        data: {
+            senderId: session.user.id,
+            receiverId,
+            content,
+        },
+    });
+
+    revalidatePath("/messages");
+    return message;
+}
+
 export async function getConversations() {
     const session = await getSession();
     if (!session || !ALLOWED_ROLES.includes(session.user.role)) {

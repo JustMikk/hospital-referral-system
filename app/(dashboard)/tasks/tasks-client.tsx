@@ -25,7 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Clock, CheckCircle2, AlertCircle, Plus, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, AlertCircle, Plus, Loader2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateTaskStatus, createTask } from "@/app/actions/tasks";
 import { toast } from "sonner";
@@ -41,17 +41,21 @@ interface Task {
     time: string;
     status: string;
     priority: string;
+    assignedTo?: string | null;
+    assignedBy?: string | null;
 }
 
 interface TasksClientProps {
     initialTasks: Task[];
     patients: { id: string; name: string }[];
+    nurses: { id: string; name: string; department: string | null }[];
 }
 
-export default function TasksClient({ initialTasks, patients }: TasksClientProps) {
+export default function TasksClient({ initialTasks, patients, nurses }: TasksClientProps) {
     const router = useRouter();
     const { userRole } = useAuth();
     const [tasks, setTasks] = useState(initialTasks);
+    const isDoctor = userRole === "doctor";
 
     useEffect(() => {
         setTasks(initialTasks);
@@ -62,6 +66,7 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
         patientId: "",
         title: "",
         priority: "NORMAL",
+        assignedToId: "",
     });
 
     const toggleTask = async (id: string) => {
@@ -93,7 +98,7 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
             await createTask(newTask);
             toast.success("Task created successfully");
             setIsAddTaskOpen(false);
-            setNewTask({ patientId: "", title: "", priority: "NORMAL" });
+            setNewTask({ patientId: "", title: "", priority: "NORMAL", assignedToId: "" });
             router.refresh();
         } catch (error) {
             toast.error("Failed to create task");
@@ -108,8 +113,8 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
     return (
         <div className="space-y-6">
             <PageHeader
-                title="My Tasks"
-                description="Manage your daily nursing responsibilities and patient care tasks"
+                title={isDoctor ? "Task Management" : "My Tasks"}
+                description={isDoctor ? "Assign and monitor tasks for nursing staff" : "Manage your daily nursing responsibilities and patient care tasks"}
             >
                 {(userRole === "doctor" || userRole === "nurse") && (
                     <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
@@ -169,6 +174,26 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                {isDoctor && nurses.length > 0 && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="assignedTo">Assign to Nurse</Label>
+                                        <Select
+                                            value={newTask.assignedToId}
+                                            onValueChange={(v) => setNewTask({ ...newTask, assignedToId: v })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select nurse (optional)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {nurses.map(n => (
+                                                    <SelectItem key={n.id} value={n.id}>
+                                                        {n.name} {n.department ? `(${n.department})` : ""}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                                 <DialogFooter>
                                     <Button type="button" variant="outline" onClick={() => setIsAddTaskOpen(false)}>
                                         Cancel
@@ -239,18 +264,18 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
 
                 <TabsContent value="pending" className="mt-4 space-y-4">
                     {pendingTasks.map((task) => (
-                        <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />
+                        <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} canToggle={!isDoctor} />
                     ))}
                     {pendingTasks.length === 0 && (
                         <div className="text-center py-12 text-muted-foreground">
-                            No pending tasks. Great job!
+                            {isDoctor ? "No pending tasks assigned." : "No pending tasks. Great job!"}
                         </div>
                     )}
                 </TabsContent>
 
                 <TabsContent value="completed" className="mt-4 space-y-4">
                     {completedTasks.map((task) => (
-                        <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} />
+                        <TaskItem key={task.id} task={task} onToggle={() => toggleTask(task.id)} canToggle={!isDoctor} />
                     ))}
                 </TabsContent>
             </Tabs>
@@ -258,20 +283,31 @@ export default function TasksClient({ initialTasks, patients }: TasksClientProps
     );
 }
 
-function TaskItem({ task, onToggle }: { task: Task, onToggle: () => void }) {
+function TaskItem({ task, onToggle, canToggle }: { task: Task, onToggle: () => void, canToggle: boolean }) {
     return (
         <Card className={cn(
             "transition-all hover:shadow-md",
             (task.priority === "Emergency" || task.priority === "Urgent") && task.status === "Pending" && "border-l-4 border-l-red-500"
         )}>
             <CardContent className="p-4 flex items-center gap-4">
-                <Checkbox
-                    checked={task.status === "Completed"}
-                    onCheckedChange={onToggle}
-                    className="h-6 w-6"
-                />
+                {canToggle ? (
+                    <Checkbox
+                        checked={task.status === "Completed"}
+                        onCheckedChange={onToggle}
+                        className="h-6 w-6"
+                    />
+                ) : (
+                    <div className={cn(
+                        "h-6 w-6 rounded border-2 flex items-center justify-center",
+                        task.status === "Completed" ? "bg-primary border-primary" : "border-muted-foreground/30"
+                    )}>
+                        {task.status === "Completed" && (
+                            <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                        )}
+                    </div>
+                )}
                 <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <h4 className={cn("font-medium", task.status === "Completed" && "line-through text-muted-foreground")}>
                             {task.task}
                         </h4>
@@ -280,6 +316,12 @@ function TaskItem({ task, onToggle }: { task: Task, onToggle: () => void }) {
                         )}
                         {task.priority === "Urgent" && (
                             <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">Urgent</Badge>
+                        )}
+                        {task.assignedTo && (
+                            <Badge variant="secondary" className="gap-1">
+                                <User className="h-3 w-3" />
+                                {task.assignedTo}
+                            </Badge>
                         )}
                     </div>
                     <p className="text-sm text-muted-foreground">

@@ -48,7 +48,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, MoreHorizontal, Phone, Shield, UserCog, Stethoscope, Filter } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Phone, Shield, UserCog, Stethoscope, Filter, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inviteStaff, updateStaffRole } from "@/app/actions/staff";
 import { toast } from "sonner";
@@ -64,11 +64,17 @@ interface StaffMember {
     createdAt: Date;
 }
 
-interface StaffClientProps {
-    initialStaff: StaffMember[];
+interface Department {
+    id: string;
+    name: string;
 }
 
-export default function StaffClient({ initialStaff }: StaffClientProps) {
+interface StaffClientProps {
+    initialStaff: StaffMember[];
+    departments: Department[];
+}
+
+export default function StaffClient({ initialStaff, departments }: StaffClientProps) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -153,7 +159,7 @@ export default function StaffClient({ initialStaff }: StaffClientProps) {
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9 border border-border/50">
                                                     <AvatarImage src={member.avatar || undefined} />
-                                                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback className="bg-primary/10 text-primary">{member.name ? member.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
                                                     <p className="font-medium text-sm">{member.name}</p>
@@ -217,7 +223,7 @@ export default function StaffClient({ initialStaff }: StaffClientProps) {
             </Card>
 
             {/* Invite Staff Modal */}
-            <InviteStaffModal open={isInviteOpen} onOpenChange={setIsInviteOpen} />
+            <InviteStaffModal open={isInviteOpen} onOpenChange={setIsInviteOpen} departments={departments} />
 
             {/* Staff Detail Drawer */}
             <Sheet open={!!selectedStaff} onOpenChange={(open) => !open && setSelectedStaff(null)}>
@@ -227,7 +233,7 @@ export default function StaffClient({ initialStaff }: StaffClientProps) {
                             <SheetHeader className="flex flex-row items-start gap-4 space-y-0">
                                 <Avatar className="h-16 w-16 border-2 border-border">
                                     <AvatarImage src={selectedStaff.avatar || undefined} />
-                                    <AvatarFallback className="text-lg">{selectedStaff.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback className="text-lg bg-primary/10 text-primary">{selectedStaff.name ? selectedStaff.name.charAt(0).toUpperCase() : <User className="h-6 w-6" />}</AvatarFallback>
                                 </Avatar>
                                 <div className="space-y-1">
                                     <SheetTitle>{selectedStaff.name}</SheetTitle>
@@ -304,7 +310,7 @@ export default function StaffClient({ initialStaff }: StaffClientProps) {
     );
 }
 
-function InviteStaffModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function InviteStaffModal({ open, onOpenChange, departments }: { open: boolean; onOpenChange: (open: boolean) => void; departments: Department[] }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -393,10 +399,18 @@ function InviteStaffModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                                     <SelectValue placeholder="Select department" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Cardiology">Cardiology</SelectItem>
-                                    <SelectItem value="Emergency">Emergency</SelectItem>
-                                    <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                                    <SelectItem value="Administration">Administration</SelectItem>
+                                    {departments.length > 0 ? (
+                                        departments.map((dept) => (
+                                            <SelectItem key={dept.id} value={dept.name}>
+                                                {dept.name}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <SelectItem value="General">General</SelectItem>
+                                            <SelectItem value="Administration">Administration</SelectItem>
+                                        </>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -432,9 +446,17 @@ function InviteStaffModal({ open, onOpenChange }: { open: boolean; onOpenChange:
                                 <span className="font-medium">{formData.department}</span>
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-center">
-                            An invitation email will be sent to this address. The link expires in 48 hours.
-                        </p>
+                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
+                                Default Password
+                            </p>
+                            <code className="px-2 py-0.5 bg-white dark:bg-background rounded font-mono text-sm">
+                                Welcome123!
+                            </code>
+                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                                Share this password securely. They should change it after first login.
+                            </p>
+                        </div>
                     </div>
                 )}
 

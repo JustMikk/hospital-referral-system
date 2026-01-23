@@ -42,8 +42,8 @@ const navItems: NavItem[] = [
   // Clinical Routes
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["doctor", "nurse", "hospital_admin"] },
   { label: "Patients", href: "/patients", icon: Users, roles: ["doctor", "nurse"] },
-  { label: "Tasks", href: "/tasks", icon: ClipboardCheck, roles: ["nurse"] },
-  { label: "Referrals", href: "/referrals", icon: FileText, roles: ["doctor", "nurse", "hospital_admin"] },
+  { label: "Tasks", href: "/tasks", icon: ClipboardCheck, roles: ["doctor", "nurse"] },
+  { label: "Referrals", href: "/referrals", icon: FileText, roles: ["doctor", "nurse"] },
   { label: "Medical Records", href: "/records", icon: FolderKanban, roles: ["doctor", "nurse"] },
   { label: "Messages", href: "/messages", icon: MessageSquare, roles: ["doctor", "nurse"] },
 
@@ -51,16 +51,14 @@ const navItems: NavItem[] = [
   { label: "Staff Mgmt", href: "/staff", icon: Users, roles: ["hospital_admin"] },
   { label: "Departments", href: "/departments", icon: Building2, roles: ["hospital_admin"] },
   { label: "Emergency Access", href: "/emergency-access", icon: AlertTriangle, roles: ["hospital_admin"] },
+  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList, roles: ["hospital_admin", "doctor"] },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["hospital_admin", "system_admin"] },
 
-  // System Admin Routes (Hidden from Hospital Admin)
-  { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["system_admin"] },
+  // System Admin Routes
+  { label: "Overview", href: "/admin/overview", icon: LayoutDashboard, roles: ["system_admin"] },
   { label: "Hospital Mgmt", href: "/admin/hospitals", icon: Building2, roles: ["system_admin"] },
-  { label: "System Staff", href: "/admin/staff", icon: UserCog, roles: ["system_admin"] },
-  { label: "Permissions", href: "/admin/permissions", icon: Shield, roles: ["system_admin"] },
 
-  // Shared
-  { label: "Audit Logs", href: "/audit-logs", icon: ClipboardList, roles: ["hospital_admin", "doctor", "system_admin"] },
+  // Settings for all roles
   { label: "Settings", href: "/settings", icon: Settings, roles: ["doctor", "nurse", "hospital_admin", "system_admin"] },
 ];
 
@@ -117,7 +115,10 @@ export function Sidebar() {
           <nav className="flex-1 overflow-y-auto p-3 space-y-1">
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              // Fix: Exact match for parent routes to prevent multiple active states
+              const isExactMatch = pathname === item.href;
+              const isChildMatch = pathname.startsWith(`${item.href}/`) && item.href !== "/admin";
+              const isActive = isExactMatch || isChildMatch;
 
               const navLink = (
                 <Link

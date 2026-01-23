@@ -48,7 +48,9 @@ model User {
   receivedReferrals   Referral[]           @relation("ReceivingDoctor")
   sentReferrals       Referral[]           @relation("ReferringDoctor")
   sessions            Session[]
-  assignedTasks       Task[]
+  assignedTasks       Task[]               @relation("AssignedTasks")
+  createdTasks        Task[]               @relation("CreatedTasks")
+  uploadedDocuments   MedicalDocument[]
   hospital            Hospital?            @relation(fields: [hospitalId], references: [id])
   userDepartment      Department?          @relation("UserDepartment", fields: [userDepartmentId], references: [id])
 }
@@ -82,6 +84,7 @@ model Patient {
   appointments                 Appointment[]
   emergencyAccessLogs          EmergencyAccessLog[]
   medicalRecords               MedicalRecord[]
+  medicalDocuments             MedicalDocument[]
   hospital                     Hospital             @relation(fields: [hospitalId], references: [id])
   referrals                    Referral[]
   tasks                        Task[]
@@ -161,12 +164,28 @@ model Task {
   patientId    String?
   hospitalId   String
   assignedToId String?
+  assignedById String?
   dueDate      DateTime?
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
-  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  assignedTo   User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedBy   User?     @relation("CreatedTasks", fields: [assignedById], references: [id])
   hospital     Hospital  @relation(fields: [hospitalId], references: [id])
   patient      Patient?  @relation(fields: [patientId], references: [id])
+}
+
+model MedicalDocument {
+  id                  String   @id @default(uuid())
+  patientId           String
+  title               String
+  type                String
+  cloudinaryUrl       String
+  cloudinaryPublicId  String
+  fileSize            Int?
+  uploadedById        String
+  createdAt           DateTime @default(now())
+  patient             Patient  @relation(fields: [patientId], references: [id])
+  uploadedBy          User     @relation(fields: [uploadedById], references: [id])
 }
 
 model AuditLog {

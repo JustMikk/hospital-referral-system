@@ -37,11 +37,14 @@ import {
     History,
     Loader2,
     Building2,
+    Upload,
 } from "lucide-react";
 import { createMedicalRecord } from "@/app/actions/patients";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
+import { DocumentUploadDialog } from "@/components/medical/document-upload-dialog";
+import { DocumentList } from "@/components/medical/document-list";
 
 interface PatientProfileClientProps {
     patient: any;
@@ -237,6 +240,12 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
                     >
                         Lab Results
                     </TabsTrigger>
+                    <TabsTrigger
+                        value="documents"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                    >
+                        Documents
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-6">
@@ -361,6 +370,35 @@ export default function PatientProfileClient({ patient }: PatientProfileClientPr
                                     <p className="text-muted-foreground">No lab results found.</p>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="documents" className="mt-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-primary" />
+                                Medical Documents
+                            </CardTitle>
+                            {(userRole === "doctor" || userRole === "nurse") && (
+                                <DocumentUploadDialog
+                                    patientId={patient.id}
+                                    patientName={patient.name}
+                                    trigger={
+                                        <Button size="sm" className="gap-2">
+                                            <Upload className="h-4 w-4" />
+                                            Upload
+                                        </Button>
+                                    }
+                                />
+                            )}
+                        </CardHeader>
+                        <CardContent>
+                            <DocumentList
+                                documents={patient.medicalDocuments || []}
+                                patientId={patient.id}
+                            />
                         </CardContent>
                     </Card>
                 </TabsContent>

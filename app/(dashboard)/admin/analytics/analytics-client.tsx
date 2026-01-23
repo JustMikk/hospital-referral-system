@@ -56,10 +56,10 @@ interface AnalyticsClientProps {
 
 export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
     const overviewMetrics = [
-        { label: "Total Referrals", value: initialData.metrics.totalReferrals.toLocaleString(), change: "+12%", icon: TrendingUp, color: "text-blue-600 bg-blue-100" },
-        { label: "Avg Response Time", value: initialData.metrics.responseTime, change: "-8%", icon: Clock, color: "text-emerald-600 bg-emerald-100" },
-        { label: "Emergency Cases", value: initialData.metrics.emergencyCases.toString(), change: "+2%", icon: AlertTriangle, color: "text-red-600 bg-red-100" },
-        { label: "Acceptance Rate", value: `${initialData.metrics.acceptanceRate}%`, change: "+1%", icon: CheckCircle2, color: "text-purple-600 bg-purple-100" },
+        { label: "Total Referrals", value: initialData.metrics.totalReferrals.toLocaleString(), icon: TrendingUp, color: "text-blue-600 bg-blue-100" },
+        { label: "Avg Response Time", value: initialData.metrics.responseTime, icon: Clock, color: "text-emerald-600 bg-emerald-100" },
+        { label: "Emergency Cases", value: initialData.metrics.emergencyCases.toString(), icon: AlertTriangle, color: "text-red-600 bg-red-100" },
+        { label: "Acceptance Rate", value: `${initialData.metrics.acceptanceRate}%`, icon: CheckCircle2, color: "text-purple-600 bg-purple-100" },
     ];
 
     const COLORS = ["#ef4444", "#f97316", "#eab308", "#64748b"];
@@ -99,9 +99,6 @@ export default function AnalyticsClient({ initialData }: AnalyticsClientProps) {
                                 <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
                                 <div className="flex items-baseline gap-2 mt-1">
                                     <h2 className="text-2xl font-bold">{metric.value}</h2>
-                                    <span className={metric.change.startsWith("+") ? "text-emerald-600 text-xs" : "text-red-600 text-xs"}>
-                                        {metric.change}
-                                    </span>
                                 </div>
                             </div>
                             <div className={`p-3 rounded-full ${metric.color}`}>

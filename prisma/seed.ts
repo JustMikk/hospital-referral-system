@@ -346,6 +346,63 @@ async function main() {
 
     console.log('✅ Created 3 audit logs');
 
+    // Create Messages between staff
+    await prisma.message.createMany({
+        data: [
+            {
+                senderId: drWilson.id,
+                receiverId: drCarter.id,
+                content: "Hi Dr. Carter, I'm referring a patient with cardiac symptoms to your clinic. Could you take a look at the referral?",
+                read: true,
+                createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+            },
+            {
+                senderId: drCarter.id,
+                receiverId: drWilson.id,
+                content: "Hello Dr. Wilson! I've received the referral. The patient's ECG results look concerning. I'll schedule them for an appointment this week.",
+                read: true,
+                createdAt: new Date(Date.now() - 1.5 * 60 * 60 * 1000), // 1.5 hours ago
+            },
+            {
+                senderId: drWilson.id,
+                receiverId: drCarter.id,
+                content: "Great, thank you! Please let me know if you need any additional information about the patient's history.",
+                read: true,
+                createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+            },
+            {
+                senderId: drCarter.id,
+                receiverId: drWilson.id,
+                content: "Will do. I noticed the patient has a history of hypertension. Has he been compliant with his medication?",
+                read: false,
+                createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+            },
+            {
+                senderId: drWilson.id,
+                receiverId: nurseMiller.id,
+                content: "Nurse Miller, could you please update John Smith's vitals before his follow-up appointment today?",
+                read: true,
+                createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+            },
+            {
+                senderId: nurseMiller.id,
+                receiverId: drWilson.id,
+                content: "Of course, Dr. Wilson. I'll get that done within the hour and update his chart.",
+                read: true,
+                createdAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000), // 2.5 hours ago
+            },
+            {
+                senderId: nurseMiller.id,
+                receiverId: drWilson.id,
+                content: "Vitals updated! BP is 145/92, slightly elevated. Heart rate is 78 bpm. Temperature normal.",
+                read: false,
+                createdAt: new Date(Date.now() - 45 * 60 * 1000), // 45 minutes ago
+            },
+        ],
+    });
+
+    console.log('✅ Created 7 messages');
+
     console.log('🎉 Database seeded successfully!');
 }
 
