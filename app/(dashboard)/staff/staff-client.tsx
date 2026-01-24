@@ -325,7 +325,9 @@ function InviteStaffModal({ open, onOpenChange, departments }: { open: boolean; 
         setIsSubmitting(true);
         try {
             await inviteStaff(formData);
-            toast.success("Staff member invited successfully");
+            toast.success("Staff member invited successfully", {
+                description: `${formData.name} will receive login credentials.`,
+            });
             onOpenChange(false);
             setStep(1);
             setFormData({ name: "", email: "", role: "DOCTOR", department: "" });
@@ -337,142 +339,258 @@ function InviteStaffModal({ open, onOpenChange, departments }: { open: boolean; 
         }
     };
 
+    const steps = [
+        { id: 1, label: "Info", icon: User },
+        { id: 2, label: "Role", icon: UserCog },
+        { id: 3, label: "Review", icon: Shield },
+    ];
+
+    const roleOptions = [
+        { value: "DOCTOR", label: "Doctor", icon: Stethoscope, description: "Full clinical access" },
+        { value: "NURSE", label: "Nurse", icon: User, description: "Patient care access" },
+        { value: "HOSPITAL_ADMIN", label: "Hospital Admin", icon: Shield, description: "Administrative access" },
+    ];
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Invite New Staff</DialogTitle>
-                    <DialogDescription>
-                        Step {step} of 3: {step === 1 ? "Basic Info" : step === 2 ? "Role & Access" : "Review"}
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden">
+                {/* Header with gradient */}
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 pb-4">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">Invite New Staff</DialogTitle>
+                        <DialogDescription>
+                            Add a new team member to your hospital
+                        </DialogDescription>
+                    </DialogHeader>
 
-                {step === 1 && (
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input
-                                id="name"
-                                placeholder="Dr. Jane Doe"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="jane.doe@hospital.com"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            />
-                        </div>
+                    {/* Step indicator */}
+                    <div className="flex items-center justify-between mt-6 px-4">
+                        {steps.map((s, idx) => (
+                            <div key={s.id} className="flex items-center">
+                                <div className="flex flex-col items-center">
+                                    <div
+                                        className={cn(
+                                            "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                                            step > s.id && "border-primary bg-primary text-primary-foreground",
+                                            step === s.id && "border-primary bg-primary/10 text-primary ring-4 ring-primary/20",
+                                            step < s.id && "border-muted-foreground/30 text-muted-foreground"
+                                        )}
+                                    >
+                                        {step > s.id ? (
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <s.icon className="h-4 w-4" />
+                                        )}
+                                    </div>
+                                    <span className={cn(
+                                        "text-xs font-medium mt-1.5 transition-colors",
+                                        step >= s.id ? "text-primary" : "text-muted-foreground"
+                                    )}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                                {idx < steps.length - 1 && (
+                                    <div className={cn(
+                                        "h-0.5 w-12 mx-2 -mt-5 transition-colors duration-300",
+                                        step > s.id ? "bg-primary" : "bg-muted-foreground/20"
+                                    )} />
+                                )}
+                            </div>
+                        ))}
                     </div>
-                )}
+                </div>
 
-                {step === 2 && (
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Role</Label>
-                            <Select
-                                value={formData.role}
-                                onValueChange={(val) => setFormData({ ...formData, role: val })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="DOCTOR">Doctor</SelectItem>
-                                    <SelectItem value="NURSE">Nurse</SelectItem>
-                                    <SelectItem value="HOSPITAL_ADMIN">Hospital Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
+                <div className="p-6 pt-4 min-h-[280px]">
+                    {step === 1 && (
+                        <div className="grid gap-4 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="Dr. Jane Doe"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="jane.doe@hospital.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Department</Label>
-                            <Select
-                                value={formData.department}
-                                onValueChange={(val) => setFormData({ ...formData, department: val })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select department" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {departments.length > 0 ? (
-                                        departments.map((dept) => (
-                                            <SelectItem key={dept.id} value={dept.name}>
-                                                {dept.name}
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <>
-                                            <SelectItem value="General">General</SelectItem>
-                                            <SelectItem value="Administration">Administration</SelectItem>
-                                        </>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center space-x-2 pt-2">
-                            <Checkbox id="emergency" />
-                            <label
-                                htmlFor="emergency"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Allow Emergency Access (Break-Glass)
-                            </label>
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                {step === 3 && (
-                    <div className="grid gap-4 py-4">
-                        <div className="rounded-lg bg-muted p-4 space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Name:</span>
-                                <span className="font-medium">{formData.name}</span>
+                    {step === 2 && (
+                        <div className="grid gap-4 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                            <div className="space-y-3">
+                                <Label className="text-sm font-medium">Select Role</Label>
+                                <div className="grid gap-2">
+                                    {roleOptions.map((role) => (
+                                        <div
+                                            key={role.value}
+                                            onClick={() => setFormData({ ...formData, role: role.value })}
+                                            className={cn(
+                                                "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-200",
+                                                "hover:scale-[1.01] active:scale-[0.99]",
+                                                formData.role === role.value
+                                                    ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                                    : "border-border hover:border-primary/50"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
+                                                formData.role === role.value
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "bg-muted"
+                                            )}>
+                                                <role.icon className="h-4 w-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-sm">{role.label}</p>
+                                                <p className="text-xs text-muted-foreground">{role.description}</p>
+                                            </div>
+                                            {formData.role === role.value && (
+                                                <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Email:</span>
-                                <span className="font-medium">{formData.email}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Role:</span>
-                                <span className="font-medium">{formData.role}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Department:</span>
-                                <span className="font-medium">{formData.department}</span>
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Department</Label>
+                                <Select
+                                    value={formData.department}
+                                    onValueChange={(val) => setFormData({ ...formData, department: val })}
+                                >
+                                    <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                                        <SelectValue placeholder="Select department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {departments.length > 0 ? (
+                                            departments.map((dept) => (
+                                                <SelectItem key={dept.id} value={dept.name}>
+                                                    {dept.name}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <SelectItem value="General">General</SelectItem>
+                                                <SelectItem value="Administration">Administration</SelectItem>
+                                            </>
+                                        )}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30">
-                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
-                                Default Password
-                            </p>
-                            <code className="px-2 py-0.5 bg-white dark:bg-background rounded font-mono text-sm">
-                                Welcome123!
-                            </code>
-                            <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
-                                Share this password securely. They should change it after first login.
-                            </p>
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                <DialogFooter>
-                    {step > 1 && (
-                        <Button variant="outline" onClick={() => setStep(step - 1)}>
+                    {step === 3 && (
+                        <div className="grid gap-4 animate-in fade-in-0 slide-in-from-right-4 duration-300">
+                            <div className="rounded-xl border-2 border-border overflow-hidden">
+                                <div className="bg-muted/50 px-4 py-2 border-b">
+                                    <p className="text-sm font-medium">Staff Details</p>
+                                </div>
+                                <div className="p-4 space-y-3 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Name</span>
+                                        <span className="font-medium">{formData.name}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Email</span>
+                                        <span className="font-medium">{formData.email}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Role</span>
+                                        <Badge variant="secondary">{formData.role}</Badge>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Department</span>
+                                        <span className="font-medium">{formData.department || "Not assigned"}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                        <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                                            Default Password
+                                        </p>
+                                        <code className="inline-block mt-1 px-2 py-0.5 bg-white dark:bg-background rounded font-mono text-sm border">
+                                            Welcome123!
+                                        </code>
+                                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                                            Share securely. Must change after first login.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter className="p-6 pt-4 bg-muted/30 border-t">
+                    <div className="flex items-center justify-between w-full">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setStep(step - 1)}
+                            disabled={step === 1}
+                            className={cn(
+                                "transition-all duration-200",
+                                step === 1 && "opacity-0 pointer-events-none"
+                            )}
+                        >
                             Back
                         </Button>
-                    )}
-                    {step < 3 ? (
-                        <Button onClick={() => setStep(step + 1)} disabled={!formData.name || !formData.email}>Next</Button>
-                    ) : (
-                        <Button onClick={handleInvite} disabled={isSubmitting}>
-                            {isSubmitting ? "Sending..." : "Send Invite"}
-                        </Button>
-                    )}
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground mr-2">
+                                Step {step} of 3
+                            </span>
+                            {step < 3 ? (
+                                <Button
+                                    onClick={() => setStep(step + 1)}
+                                    disabled={step === 1 && (!formData.name || !formData.email)}
+                                    className="gap-2 min-w-[100px] transition-all duration-200"
+                                >
+                                    Continue
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleInvite}
+                                    disabled={isSubmitting}
+                                    className="gap-2 min-w-[120px] bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-200"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus className="h-4 w-4" />
+                                            Send Invite
+                                        </>
+                                    )}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/medical/page-header";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
@@ -28,31 +27,46 @@ import {
     X,
     Plus,
     CheckCircle2,
+    Droplet,
+    Users,
+    Sparkles,
 } from "lucide-react";
 import { createPatient } from "@/app/actions/patients";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+    StepIndicator,
+    StepContent,
+    StepNavigation,
+    FormSection,
+    ReviewItem,
+    ReviewSection,
+} from "@/components/ui/multi-step-form";
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const steps = [
+    { id: 1, title: "Basic Info", icon: User, description: "Personal details" },
+    { id: 2, title: "Medical", icon: Heart, description: "Health information" },
+    { id: 3, title: "Emergency", icon: AlertTriangle, description: "Contact info" },
+    { id: 4, title: "Review", icon: CheckCircle2, description: "Confirm details" },
+];
 
 export default function CreatePatientPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
+    const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
     const [formData, setFormData] = useState({
-        // Basic Info
         name: "",
         age: "",
         gender: "",
-        // Contact
         email: "",
         phone: "",
-        // Medical
         bloodType: "",
         allergies: [] as string[],
         chronicConditions: [] as string[],
-        // Emergency Contact
         emergencyContactName: "",
         emergencyContactPhone: "",
         emergencyContactRelationship: "",
@@ -111,7 +125,14 @@ export default function CreatePatientPage() {
 
     const handleNext = () => {
         if (validateStep(currentStep)) {
-            setCurrentStep(currentStep + 1);
+            if (!completedSteps.includes(currentStep)) {
+                setCompletedSteps([...completedSteps, currentStep]);
+            }
+            if (currentStep < steps.length) {
+                setCurrentStep(currentStep + 1);
+            } else {
+                handleSubmit();
+            }
         }
     };
 
@@ -137,7 +158,10 @@ export default function CreatePatientPage() {
                 emergencyContactPhone: formData.emergencyContactPhone || undefined,
                 emergencyContactRelationship: formData.emergencyContactRelationship || undefined,
             });
-            toast.success("Patient created successfully");
+            toast.success("Patient created successfully!", {
+                description: `${formData.name} has been added to your records.`,
+                icon: <Sparkles className="h-4 w-4" />,
+            });
             router.push("/patients");
         } catch (error: any) {
             toast.error(error.message || "Failed to create patient");
@@ -146,21 +170,15 @@ export default function CreatePatientPage() {
         }
     };
 
-    const steps = [
-        { id: 1, title: "Basic Info", icon: User },
-        { id: 2, title: "Medical", icon: Heart },
-        { id: 3, title: "Emergency", icon: AlertTriangle },
-        { id: 4, title: "Review", icon: CheckCircle2 },
-    ];
-
     return (
-        <div className="max-w-3xl mx-auto space-y-8 pb-12">
+        <div className="max-w-4xl mx-auto space-y-8 pb-12">
+            {/* Header */}
             <div className="flex items-center gap-4">
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => router.back()}
-                    className="shrink-0"
+                    className="shrink-0 hover:bg-muted/80 transition-colors"
                 >
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -171,157 +189,210 @@ export default function CreatePatientPage() {
             </div>
 
             {/* Progress Steps */}
-            <div className="relative flex justify-between mb-8 px-4">
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -z-10" />
-                {steps.map((step) => (
-                    <div key={step.id} className="flex flex-col items-center gap-2 bg-background px-2">
+            <StepIndicator
+                steps={steps}
+                currentStep={currentStep}
+                allowClickNavigation={false}
+            />
+
+            {/* Form Card */}
+            <Card className="border-border/40 shadow-xl overflow-hidden">
+                {/* Decorative top gradient */}
+                <div className="h-1 bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
+                
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
                         <div className={cn(
-                            "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-colors",
-                            currentStep >= step.id
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-muted-foreground/30 text-muted-foreground"
+                            "h-10 w-10 rounded-xl flex items-center justify-center",
+                            "bg-primary/10 text-primary"
                         )}>
-                            <step.icon className="h-5 w-5" />
+                            {(() => {
+                                const StepIcon = steps[currentStep - 1].icon;
+                                return <StepIcon className="h-5 w-5" />;
+                            })()}
                         </div>
-                        <span className={cn(
-                            "text-xs font-medium hidden sm:block",
-                            currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                        )}>{step.title}</span>
+                        <div>
+                            <h2 className="text-xl font-semibold">{steps[currentStep - 1].title}</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {steps[currentStep - 1].description}
+                            </p>
+                        </div>
                     </div>
-                ))}
-            </div>
-
-            <Card className="border-border/40 shadow-lg">
-                <CardHeader>
-                    <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-                    <CardDescription>
-                        Step {currentStep} of {steps.length}
-                    </CardDescription>
                 </CardHeader>
-                <CardContent className="min-h-[350px]">
+
+                <CardContent className="min-h-[400px]">
                     {/* Step 1: Basic Info */}
-                    {currentStep === 1 && (
+                    <StepContent step={1} currentStep={currentStep}>
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name *</Label>
-                                <Input
-                                    id="name"
-                                    placeholder="e.g. John Doe"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className={errors.name ? "border-destructive" : ""}
-                                />
-                                {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-                            </div>
-
-                            <div className="grid gap-6 sm:grid-cols-2">
+                            <FormSection title="Personal Information" description="Enter the patient's basic details">
                                 <div className="space-y-2">
-                                    <Label htmlFor="age">Age *</Label>
+                                    <Label htmlFor="name" className="flex items-center gap-1">
+                                        Full Name <span className="text-destructive">*</span>
+                                    </Label>
                                     <Input
-                                        id="age"
-                                        type="number"
-                                        placeholder="e.g. 35"
-                                        value={formData.age}
-                                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                        className={errors.age ? "border-destructive" : ""}
+                                        id="name"
+                                        placeholder="e.g. John Doe"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className={cn(
+                                            "transition-all duration-200",
+                                            errors.name ? "border-destructive ring-destructive/20 ring-2" : "focus:ring-2 focus:ring-primary/20"
+                                        )}
                                     />
-                                    {errors.age && <p className="text-xs text-destructive">{errors.age}</p>}
+                                    {errors.name && (
+                                        <p className="text-xs text-destructive animate-in slide-in-from-top-1 duration-200">
+                                            {errors.name}
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Gender *</Label>
-                                    <Select
-                                        value={formData.gender}
-                                        onValueChange={(val) => setFormData({ ...formData, gender: val })}
-                                    >
-                                        <SelectTrigger className={errors.gender ? "border-destructive" : ""}>
-                                            <SelectValue placeholder="Select gender" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="MALE">Male</SelectItem>
-                                            <SelectItem value="FEMALE">Female</SelectItem>
-                                            <SelectItem value="OTHER">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.gender && <p className="text-xs text-destructive">{errors.gender}</p>}
-                                </div>
-                            </div>
-
-                            <div className="grid gap-6 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="age" className="flex items-center gap-1">
+                                            Age <span className="text-destructive">*</span>
+                                        </Label>
                                         <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="patient@email.com"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="pl-10"
+                                            id="age"
+                                            type="number"
+                                            placeholder="e.g. 35"
+                                            value={formData.age}
+                                            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                                            className={cn(
+                                                "transition-all duration-200",
+                                                errors.age ? "border-destructive ring-destructive/20 ring-2" : "focus:ring-2 focus:ring-primary/20"
+                                            )}
                                         />
+                                        {errors.age && (
+                                            <p className="text-xs text-destructive animate-in slide-in-from-top-1 duration-200">
+                                                {errors.age}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-1">
+                                            Gender <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Select
+                                            value={formData.gender}
+                                            onValueChange={(val) => setFormData({ ...formData, gender: val })}
+                                        >
+                                            <SelectTrigger className={cn(
+                                                "transition-all duration-200",
+                                                errors.gender ? "border-destructive ring-destructive/20 ring-2" : ""
+                                            )}>
+                                                <SelectValue placeholder="Select gender" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="MALE">Male</SelectItem>
+                                                <SelectItem value="FEMALE">Female</SelectItem>
+                                                <SelectItem value="OTHER">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.gender && (
+                                            <p className="text-xs text-destructive animate-in slide-in-from-top-1 duration-200">
+                                                {errors.gender}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
+                            </FormSection>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone Number</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                        <Input
-                                            id="phone"
-                                            type="tel"
-                                            placeholder="+1 (555) 000-0000"
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                            className="pl-10"
-                                        />
+                            <FormSection title="Contact Information" description="Optional contact details">
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <div className="relative group">
+                                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                placeholder="patient@email.com"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <div className="relative group">
+                                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                            <Input
+                                                id="phone"
+                                                type="tel"
+                                                placeholder="+1 (555) 000-0000"
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </FormSection>
                         </div>
-                    )}
+                    </StepContent>
 
                     {/* Step 2: Medical Info */}
-                    {currentStep === 2 && (
+                    <StepContent step={2} currentStep={currentStep}>
                         <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label>Blood Type</Label>
-                                <Select
-                                    value={formData.bloodType}
-                                    onValueChange={(val) => setFormData({ ...formData, bloodType: val })}
-                                >
-                                    <SelectTrigger className="w-full sm:w-[200px]">
-                                        <SelectValue placeholder="Select blood type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {bloodTypes.map((type) => (
-                                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            <FormSection title="Blood Type" description="Select the patient's blood type if known">
+                                <div className="flex flex-wrap gap-2">
+                                    {bloodTypes.map((type) => (
+                                        <button
+                                            key={type}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, bloodType: type })}
+                                            className={cn(
+                                                "px-4 py-2 rounded-lg border-2 font-medium transition-all duration-200",
+                                                "hover:scale-105 active:scale-95",
+                                                formData.bloodType === type
+                                                    ? "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                                                    : "border-border hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-900/10"
+                                            )}
+                                        >
+                                            <Droplet className={cn(
+                                                "h-4 w-4 inline mr-1.5 transition-colors",
+                                                formData.bloodType === type ? "text-red-500" : "text-muted-foreground"
+                                            )} />
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </FormSection>
 
-                            <div className="space-y-3">
-                                <Label>Known Allergies</Label>
+                            <FormSection title="Known Allergies" description="Add any allergies the patient has">
                                 <div className="flex gap-2">
                                     <Input
                                         placeholder="Add allergy (e.g. Penicillin)"
                                         value={newAllergy}
                                         onChange={(e) => setNewAllergy(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAllergy())}
+                                        className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                                     />
-                                    <Button type="button" variant="secondary" onClick={addAllergy}>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={addAllergy}
+                                        className="shrink-0 hover:scale-105 active:scale-95 transition-transform"
+                                    >
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
                                 {formData.allergies.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.allergies.map((allergy) => (
-                                            <Badge key={allergy} variant="destructive" className="gap-1 pr-1">
+                                    <div className="flex flex-wrap gap-2 animate-in fade-in-0 duration-200">
+                                        {formData.allergies.map((allergy, index) => (
+                                            <Badge
+                                                key={allergy}
+                                                variant="destructive"
+                                                className="gap-1 pr-1 animate-in zoom-in-95 duration-200"
+                                                style={{ animationDelay: `${index * 50}ms` }}
+                                            >
                                                 {allergy}
                                                 <button
                                                     onClick={() => removeAllergy(allergy)}
-                                                    className="ml-1 rounded-full hover:bg-destructive-foreground/20 p-0.5"
+                                                    className="ml-1 rounded-full hover:bg-destructive-foreground/20 p-0.5 transition-colors"
                                                 >
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -329,29 +400,39 @@ export default function CreatePatientPage() {
                                         ))}
                                     </div>
                                 )}
-                            </div>
+                            </FormSection>
 
-                            <div className="space-y-3">
-                                <Label>Chronic Conditions</Label>
+                            <FormSection title="Chronic Conditions" description="Add any ongoing medical conditions">
                                 <div className="flex gap-2">
                                     <Input
                                         placeholder="Add condition (e.g. Diabetes)"
                                         value={newCondition}
                                         onChange={(e) => setNewCondition(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCondition())}
+                                        className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                                     />
-                                    <Button type="button" variant="secondary" onClick={addCondition}>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={addCondition}
+                                        className="shrink-0 hover:scale-105 active:scale-95 transition-transform"
+                                    >
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
                                 {formData.chronicConditions.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.chronicConditions.map((condition) => (
-                                            <Badge key={condition} variant="secondary" className="gap-1 pr-1">
+                                    <div className="flex flex-wrap gap-2 animate-in fade-in-0 duration-200">
+                                        {formData.chronicConditions.map((condition, index) => (
+                                            <Badge
+                                                key={condition}
+                                                variant="secondary"
+                                                className="gap-1 pr-1 animate-in zoom-in-95 duration-200"
+                                                style={{ animationDelay: `${index * 50}ms` }}
+                                            >
                                                 {condition}
                                                 <button
                                                     onClick={() => removeCondition(condition)}
-                                                    className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
+                                                    className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5 transition-colors"
                                                 >
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -359,104 +440,123 @@ export default function CreatePatientPage() {
                                         ))}
                                     </div>
                                 )}
-                            </div>
+                            </FormSection>
                         </div>
-                    )}
+                    </StepContent>
 
                     {/* Step 3: Emergency Contact */}
-                    {currentStep === 3 && (
+                    <StepContent step={3} currentStep={currentStep}>
                         <div className="space-y-6">
-                            <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm">
-                                <AlertTriangle className="h-4 w-4 inline mr-2" />
-                                Emergency contact information is crucial for patient safety
+                            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                        <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-amber-800 dark:text-amber-300">
+                                            Emergency Contact Information
+                                        </h4>
+                                        <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                                            This information is crucial for patient safety and will be used in case of emergencies.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="emergencyName">Contact Name</Label>
-                                <Input
-                                    id="emergencyName"
-                                    placeholder="e.g. Jane Doe"
-                                    value={formData.emergencyContactName}
-                                    onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid gap-6 sm:grid-cols-2">
+                            <FormSection>
                                 <div className="space-y-2">
-                                    <Label htmlFor="emergencyPhone">Contact Phone</Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Label htmlFor="emergencyName">Contact Name</Label>
+                                    <div className="relative group">
+                                        <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                                         <Input
-                                            id="emergencyPhone"
-                                            type="tel"
-                                            placeholder="+1 (555) 000-0000"
-                                            value={formData.emergencyContactPhone}
-                                            onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
-                                            className="pl-10"
+                                            id="emergencyName"
+                                            placeholder="e.g. Jane Doe"
+                                            value={formData.emergencyContactName}
+                                            onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                                            className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Relationship</Label>
-                                    <Select
-                                        value={formData.emergencyContactRelationship}
-                                        onValueChange={(val) => setFormData({ ...formData, emergencyContactRelationship: val })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select relationship" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Spouse">Spouse</SelectItem>
-                                            <SelectItem value="Parent">Parent</SelectItem>
-                                            <SelectItem value="Child">Child</SelectItem>
-                                            <SelectItem value="Sibling">Sibling</SelectItem>
-                                            <SelectItem value="Friend">Friend</SelectItem>
-                                            <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                                        <div className="relative group">
+                                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                                            <Input
+                                                id="emergencyPhone"
+                                                type="tel"
+                                                placeholder="+1 (555) 000-0000"
+                                                value={formData.emergencyContactPhone}
+                                                onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                                                className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Relationship</Label>
+                                        <Select
+                                            value={formData.emergencyContactRelationship}
+                                            onValueChange={(val) => setFormData({ ...formData, emergencyContactRelationship: val })}
+                                        >
+                                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                                                <SelectValue placeholder="Select relationship" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Spouse">Spouse</SelectItem>
+                                                <SelectItem value="Parent">Parent</SelectItem>
+                                                <SelectItem value="Child">Child</SelectItem>
+                                                <SelectItem value="Sibling">Sibling</SelectItem>
+                                                <SelectItem value="Friend">Friend</SelectItem>
+                                                <SelectItem value="Other">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
-                            </div>
+                            </FormSection>
                         </div>
-                    )}
+                    </StepContent>
 
                     {/* Step 4: Review */}
-                    {currentStep === 4 && (
+                    <StepContent step={4} currentStep={currentStep}>
                         <div className="space-y-6">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Full Name</p>
-                                    <p className="font-medium">{formData.name}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Age</p>
-                                    <p className="font-medium">{formData.age} years old</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Gender</p>
-                                    <p className="font-medium capitalize">{formData.gender.toLowerCase()}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Blood Type</p>
-                                    <p className="font-medium">{formData.bloodType || "Not specified"}</p>
-                                </div>
-                                {formData.email && (
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium">{formData.email}</p>
+                            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                                     </div>
-                                )}
-                                {formData.phone && (
-                                    <div className="space-y-1">
-                                        <p className="text-sm text-muted-foreground">Phone</p>
-                                        <p className="font-medium">{formData.phone}</p>
+                                    <div>
+                                        <h4 className="font-semibold text-emerald-800 dark:text-emerald-300">
+                                            Almost Done!
+                                        </h4>
+                                        <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">
+                                            Please review the information below before creating the patient record.
+                                        </p>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
+                            <ReviewSection title="Personal Information" icon={<User className="h-4 w-4" />}>
+                                <ReviewItem label="Full Name" value={formData.name} icon={<User className="h-4 w-4" />} />
+                                <ReviewItem label="Age" value={formData.age ? `${formData.age} years old` : null} />
+                                <ReviewItem label="Gender" value={formData.gender ? formData.gender.charAt(0) + formData.gender.slice(1).toLowerCase() : null} />
+                                <ReviewItem label="Blood Type" value={formData.bloodType} icon={<Droplet className="h-4 w-4" />} />
+                            </ReviewSection>
+
+                            {(formData.email || formData.phone) && (
+                                <ReviewSection title="Contact Information" icon={<Mail className="h-4 w-4" />}>
+                                    {formData.email && <ReviewItem label="Email" value={formData.email} icon={<Mail className="h-4 w-4" />} />}
+                                    {formData.phone && <ReviewItem label="Phone" value={formData.phone} icon={<Phone className="h-4 w-4" />} />}
+                                </ReviewSection>
+                            )}
+
                             {formData.allergies.length > 0 && (
-                                <div className="space-y-2 pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground">Allergies</p>
+                                <div className="space-y-2">
+                                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                                        Allergies
+                                    </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {formData.allergies.map((a) => (
                                             <Badge key={a} variant="destructive">{a}</Badge>
@@ -466,8 +566,11 @@ export default function CreatePatientPage() {
                             )}
 
                             {formData.chronicConditions.length > 0 && (
-                                <div className="space-y-2 pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground">Chronic Conditions</p>
+                                <div className="space-y-2">
+                                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                                        <Heart className="h-4 w-4 text-amber-500" />
+                                        Chronic Conditions
+                                    </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {formData.chronicConditions.map((c) => (
                                             <Badge key={c} variant="secondary">{c}</Badge>
@@ -477,51 +580,33 @@ export default function CreatePatientPage() {
                             )}
 
                             {formData.emergencyContactName && (
-                                <div className="space-y-2 pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground">Emergency Contact</p>
-                                    <p className="font-medium">
-                                        {formData.emergencyContactName}
-                                        {formData.emergencyContactRelationship && ` (${formData.emergencyContactRelationship})`}
-                                    </p>
-                                    {formData.emergencyContactPhone && (
-                                        <p className="text-sm text-muted-foreground">{formData.emergencyContactPhone}</p>
-                                    )}
-                                </div>
+                                <ReviewSection title="Emergency Contact" icon={<AlertTriangle className="h-4 w-4" />}>
+                                    <ReviewItem label="Name" value={formData.emergencyContactName} icon={<Users className="h-4 w-4" />} />
+                                    <ReviewItem label="Phone" value={formData.emergencyContactPhone} icon={<Phone className="h-4 w-4" />} />
+                                    <ReviewItem
+                                        label="Relationship"
+                                        value={formData.emergencyContactRelationship}
+                                        className="sm:col-span-2"
+                                    />
+                                </ReviewSection>
                             )}
                         </div>
-                    )}
+                    </StepContent>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                    <Button
-                        variant="outline"
-                        onClick={handleBack}
-                        disabled={currentStep === 1 || isSubmitting}
-                    >
-                        Back
-                    </Button>
 
-                    {currentStep < 4 ? (
-                        <Button onClick={handleNext}>
-                            Next Step
-                        </Button>
-                    ) : (
-                        <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Creating...
-                                </>
-                            ) : (
-                                <>
-                                    <UserPlus className="h-4 w-4" />
-                                    Create Patient
-                                </>
-                            )}
-                        </Button>
-                    )}
+                <CardFooter className="bg-muted/30">
+                    <StepNavigation
+                        currentStep={currentStep}
+                        totalSteps={steps.length}
+                        onBack={handleBack}
+                        onNext={handleNext}
+                        isSubmitting={isSubmitting}
+                        nextLabel="Continue"
+                        submitLabel="Create Patient"
+                        submitIcon={<UserPlus className="h-4 w-4" />}
+                    />
                 </CardFooter>
             </Card>
         </div>
     );
 }
-
