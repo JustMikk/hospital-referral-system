@@ -225,7 +225,7 @@ export function DocumentList({ documents, patientId }: DocumentListProps) {
                 })}
             </div>
 
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialog  open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Document</AlertDialogTitle>
