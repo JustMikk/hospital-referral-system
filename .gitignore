@@ -16,8 +16,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# Ignore all env files
 .env*
+
+
+# But keep the example file
+!.env.example
 
 # vercel
 .vercel
