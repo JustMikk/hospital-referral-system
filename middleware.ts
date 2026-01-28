@@ -9,7 +9,8 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/forgot-password");
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/contact-hospitals");
 
   if (!session && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
