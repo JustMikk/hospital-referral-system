@@ -42,7 +42,7 @@ const heroData = {
   cta: "Get Started",
   stats: [
     { value: "70%", label: "Faster Referrals" },
-    { value: "500+", label: "Hospitals" },
+    { value: "5+", label: "Hospitals" },
     { value: "99.9%", label: "Uptime" },
     { value: "24/7", label: "Support" },
   ],
@@ -125,7 +125,7 @@ const features = [
 
 const testimonials = [
   {
-    name: "Dr. Sarah Chen",
+    name: "Dr. Amanuel Solomon",
     role: "Chief of Medicine, Metropolitan Hospital",
     content:
       "Reduced our referral processing time by 80%. The platform has revolutionized how we coordinate patient care.",
@@ -133,7 +133,7 @@ const testimonials = [
     color: "bg-blue-500/10",
   },
   {
-    name: "Nurse Michael Torres",
+    name: "Nurse Selamawit Bekele",
     role: "Emergency Department Lead",
     content:
       "The real-time updates and secure messaging have transformed our emergency response coordination.",
@@ -141,7 +141,7 @@ const testimonials = [
     color: "bg-emerald-500/10",
   },
   {
-    name: "Dr. James Wilson",
+    name: "Dr. Tewelde Gebremedhin",
     role: "Cardiology Specialist",
     content:
       "Finally, a platform that understands healthcare workflows. The secure document sharing is a game-changer.",
@@ -498,7 +498,7 @@ export default function HomePage() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-6">
-                  No credit card required • 30-day free trial • HIPAA compliant
+                  No credit card required • HIPAA compliant
                 </p>
               </div>
             </CardContent>
@@ -520,39 +520,6 @@ export default function HomePage() {
                   Hospital Referral System
                 </p>
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-6 justify-center">
-              <Link
-                href="/contact-hospitals"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Contact Hospitals
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Features
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Security
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Terms of Service
-              </Link>
             </div>
           </div>
 
