@@ -13,113 +13,150 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
-  CheckCircle,
   Shield,
   Zap,
-  BarChart,
   Users,
   Clock,
   FileText,
   MessageSquare,
   Lock,
-  Globe,
+  Stethoscope,
+  Building2,
+  Heart,
+  Activity,
+  Bell,
+  CheckCircle2,
+  Sparkles,
+  BarChart3,
+  ShieldCheck,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 
-const carouselImages = [
+const heroData = {
+  title: "Hospital Referrals Made Simple",
+  subtitle:
+    "Secure, HIPAA-compliant platform for seamless patient transfers between healthcare providers",
+  cta: "Get Started",
+  stats: [
+    { value: "70%", label: "Faster Referrals" },
+    { value: "500+", label: "Hospitals" },
+    { value: "99.9%", label: "Uptime" },
+    { value: "24/7", label: "Support" },
+  ],
+};
+
+const services = [
   {
-    url: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1200&q=80",
-    title: "Secure Hospital Referral System",
+    icon: <Stethoscope className="h-8 w-8" />,
+    title: "Medical Referrals",
     description:
-      "Streamline patient referrals and share medical records securely across healthcare facilities in real-time.",
+      "Streamline patient transfers between hospitals and specialists with automated workflows.",
+    features: [
+      "Instant referral submission",
+      "Real-time status tracking",
+      "Priority-based routing",
+    ],
+    color: "bg-blue-500/10 text-blue-600",
   },
   {
-    url: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&q=80",
-    title: "Connected Healthcare Network",
+    icon: <FileText className="h-8 w-8" />,
+    title: "Digital Records",
     description:
-      "Join a network of 500+ hospitals sharing patient data securely and efficiently.",
+      "Secure, encrypted medical record sharing with granular access controls.",
+    features: ["HIPAA compliant", "End-to-end encryption", "Audit trail"],
+    color: "bg-emerald-500/10 text-emerald-600",
   },
   {
-    url: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=1200&q=80",
-    title: "Real-time Collaboration",
+    icon: <MessageSquare className="h-8 w-8" />,
+    title: "Care Coordination",
     description:
-      "Enable doctors and nurses to communicate and collaborate on patient care instantly.",
+      "Real-time communication between healthcare teams for better patient outcomes.",
+    features: ["Secure messaging", "Video consultations", "Team collaboration"],
+    color: "bg-purple-500/10 text-purple-600",
+  },
+  {
+    icon: <BarChart3 className="h-8 w-8" />,
+    title: "Analytics & Insights",
+    description:
+      "Data-driven insights to optimize referral processes and patient care.",
+    features: ["Performance metrics", "Trend analysis", "Quality reporting"],
+    color: "bg-amber-500/10 text-amber-600",
   },
 ];
 
 const features = [
   {
+    icon: <ShieldCheck className="h-6 w-6" />,
+    title: "Enterprise Security",
+    description:
+      "Bank-level encryption, HIPAA compliance, and SOC 2 certification.",
+  },
+  {
     icon: <Zap className="h-6 w-6" />,
-    title: "Instant Referrals",
-    description:
-      "Submit and process patient referrals in minutes instead of days with our streamlined workflow.",
-  },
-  {
-    icon: <Shield className="h-6 w-6" />,
-    title: "HIPAA Compliant",
-    description:
-      "Enterprise-grade security with end-to-end encryption and compliance with healthcare regulations.",
-  },
-  {
-    icon: <BarChart className="h-6 w-6" />,
-    title: "Analytics Dashboard",
-    description:
-      "Track referral metrics, patient outcomes, and hospital performance with real-time analytics.",
+    title: "Instant Processing",
+    description: "Reduce referral processing time from days to minutes.",
   },
   {
     icon: <Users className="h-6 w-6" />,
-    title: "Multi-role Access",
-    description:
-      "Role-based access for doctors, nurses, administrators, and hospital staff with appropriate permissions.",
+    title: "Multi-Role Platform",
+    description: "Tailored interfaces for doctors, nurses, and administrators.",
   },
   {
     icon: <Clock className="h-6 w-6" />,
-    title: "Real-time Updates",
+    title: "24/7 Availability",
     description:
-      "Get instant notifications on referral status, patient transfers, and medical record updates.",
+      "Round-the-clock access for emergency cases and urgent referrals.",
   },
   {
-    icon: <FileText className="h-6 w-6" />,
-    title: "Digital Records",
+    icon: <Activity className="h-6 w-6" />,
+    title: "Real-time Updates",
+    description: "Live tracking of referral status and patient transfers.",
+  },
+  {
+    icon: <Cpu className="h-6 w-6" />,
+    title: "Smart Routing",
     description:
-      "Convert paper-based medical records to secure digital format with easy search and retrieval.",
+      "AI-powered suggestions for optimal hospital and specialist matching.",
   },
 ];
 
 const testimonials = [
   {
-    name: "Dr. Sarah Johnson",
-    role: "Chief Medical Officer, City General Hospital",
+    name: "Dr. Sarah Chen",
+    role: "Chief of Medicine, Metropolitan Hospital",
     content:
-      "Refero has reduced our referral processing time by 70%. Patient transfers that used to take days now happen in hours.",
+      "Reduced our referral processing time by 80%. The platform has revolutionized how we coordinate patient care.",
+    avatar: "SC",
+    color: "bg-blue-500/10",
   },
   {
-    name: "Michael Chen",
-    role: "IT Director, Regional Health Network",
+    name: "Nurse Michael Torres",
+    role: "Emergency Department Lead",
     content:
-      "The security features give us peace of mind. End-to-end encryption ensures patient data is always protected.",
+      "The real-time updates and secure messaging have transformed our emergency response coordination.",
+    avatar: "MT",
+    color: "bg-emerald-500/10",
   },
   {
-    name: "Nurse Emma Rodriguez",
-    role: "Emergency Department, Memorial Hospital",
+    name: "Dr. James Wilson",
+    role: "Cardiology Specialist",
     content:
-      "The real-time messaging and status updates have revolutionized how we coordinate emergency patient transfers.",
+      "Finally, a platform that understands healthcare workflows. The secure document sharing is a game-changer.",
+    avatar: "JW",
+    color: "bg-purple-500/10",
   },
 ];
 
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Auto-rotate carousel
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    setIsVisible(true);
   }, []);
 
   const handleGetStarted = () => {
@@ -138,129 +175,169 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-blue-50/30 dark:to-gray-900/30">
       {/* Hero Section */}
-      <header className="relative overflow-hidden">
-        {/* Background Carousel */}
-        <div className="absolute inset-0 z-0">
-          {carouselImages.map((slide, index) => (
-            <div
-              key={index}
-              className={cn(
-                "absolute inset-0 transition-opacity duration-1000",
-                index === currentSlide ? "opacity-100" : "opacity-0",
-              )}
-            >
-              <img
-                src={slide.url}
-                alt={slide.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-blue-900/80" />
-            </div>
-          ))}
+      <section className="relative overflow-hidden">
+        {/* Background Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
+
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute top-60 -left-20 w-60 h-60 bg-blue-500/5 rounded-full blur-3xl" />
         </div>
 
-        {/* Navigation */}
-        <nav className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                <Globe className="h-6 w-6 text-white" />
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+          {/* Navigation */}
+          <nav className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+                <Heart className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">Refero</span>
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-white/20 text-white backdrop-blur-sm"
-              >
-                new
-              </Badge>
+              <div>
+                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  Refero
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  Hospital Referral System
+                </p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center gap-4">
+              <Link href="/contact-hospitals">
+                <Button variant="ghost" className="hidden sm:inline-flex">
+                  Contact Hospitals
+                </Button>
+              </Link>
               {user ? (
-                <Button onClick={handleGetStarted} variant="secondary">
+                <Button onClick={handleGetStarted} className="gap-2">
                   Go to Dashboard
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <>
-                  <Link href="/login">
-                    <Button
-                      variant="ghost"
-                      className="text-white hover:bg-white/20"
-                    >
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href="/login">
-                    <Button className="bg-white text-primary hover:bg-white/90">
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
+                <Button onClick={handleGetStarted} className="gap-2">
+                  Sign In
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               )}
             </div>
-          </div>
-        </nav>
+          </nav>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="max-w-3xl">
-            <Badge className="mb-6 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30">
-              Trusted by 500+ Hospitals
-            </Badge>
-            <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-white mb-6">
-              Revolutionizing
-              <span className="block text-blue-200">Hospital Referrals</span>
-            </h1>
-            <p className="text-xl text-white/90 mb-10 max-w-2xl">
-              A secure, HIPAA-compliant platform that connects healthcare
-              providers for seamless patient referrals, real-time collaboration,
-              and efficient medical record sharing.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="bg-white text-primary hover:bg-white/90"
-                onClick={handleGetStarted}
-              >
-                {user ? "Go to Dashboard" : "Get Started"}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+          {/* Hero Content */}
+          <div className="py-20 lg:py-32">
+            <div className="max-w-4xl mx-auto text-center">
+              <Badge className="mb-6 px-4 py-1.5 text-sm bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                <Sparkles className="h-3 w-3 mr-2" />
+                Trusted by Leading Healthcare Providers
+              </Badge>
+
+              <h1 className="text-5xl lg:text-7xl font-bold tracking-tight mb-6">
+                <span className="block">Streamline</span>
+                <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  Hospital Referrals
+                </span>
+              </h1>
+
+              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+                A secure, HIPAA-compliant platform connecting healthcare
+                providers for efficient patient transfers, real-time
+                collaboration, and seamless medical record sharing.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                <Button
+                  size="lg"
+                  onClick={handleGetStarted}
+                  className="h-14 px-8 text-lg gap-3"
+                >
+                  {user ? "Go to Dashboard" : "Start Free Trial"}
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => router.push("/contact-hospitals")}
+                  className="h-14 px-8 text-lg"
+                >
+                  <Building2 className="h-5 w-5 mr-2" />
+                  Contact Hospitals
+                </Button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+                {heroData.stats.map((stat, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "p-6 rounded-2xl border bg-card/50 backdrop-blur-sm transition-all duration-300",
+                      isVisible
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-4",
+                      "hover:shadow-lg hover:border-primary/30",
+                    )}
+                    style={{ transitionDelay: `${index * 100}ms` }}
+                  >
+                    <div className="text-3xl font-bold text-primary mb-2">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* Features Section */}
+      {/* Services Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-bold tracking-tight mb-4">
-              Everything you need for
-              <span className="text-primary"> seamless referrals</span>
+              Comprehensive Healthcare Solutions
             </h2>
             <p className="text-lg text-muted-foreground">
-              Our platform combines security, efficiency, and collaboration
-              tools designed specifically for healthcare professionals.
+              Everything you need for efficient hospital coordination and
+              patient care
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, index) => (
               <Card
                 key={index}
-                className="border-border/40 hover:border-primary/50 transition-all hover:shadow-lg"
+                className={cn(
+                  "group border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-xl",
+                  "hover:-translate-y-1",
+                )}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary mb-4">
-                    {feature.icon}
+                <CardHeader className="pb-4">
+                  <div
+                    className={`inline-flex p-3 rounded-xl ${service.color} mb-4`}
+                  >
+                    {service.icon}
                   </div>
-                  <CardTitle>{feature.title}</CardTitle>
+                  <CardTitle className="text-xl">{service.title}</CardTitle>
+                  <CardDescription className="mt-2">
+                    {service.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base">
-                    {feature.description}
-                  </CardDescription>
+                  <ul className="space-y-2">
+                    {service.features.map((feature, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center text-sm text-muted-foreground"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             ))}
@@ -268,49 +345,78 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Security Section */}
-      <section className="py-20 bg-muted/50">
+      {/* Features Section */}
+      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <Badge variant="outline" className="mb-4">
-                <Lock className="mr-2 h-3 w-3" />
-                Enterprise Security
-              </Badge>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+                <Shield className="h-4 w-4" />
+                Enterprise-Grade Features
+              </div>
               <h2 className="text-4xl font-bold tracking-tight mb-6">
-                Your patients&apos; data is
-                <span className="text-primary"> always protected</span>
+                Built for Modern Healthcare
               </h2>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                  <span>HIPAA & GDPR compliant with end-to-end encryption</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Role-based access control with audit trails</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                  <span>SOC 2 Type II certified infrastructure</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Automatic data retention and deletion policies</span>
-                </li>
-              </ul>
+              <p className="text-lg text-muted-foreground mb-10">
+                Designed with input from healthcare professionals to address
+                real-world challenges in patient referral and care coordination.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                {features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4 p-4 rounded-xl hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      {feature.icon}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">{feature.title}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="relative">
-              <div className="aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl">
+              <div className="aspect-square rounded-3xl overflow-hidden border border-border shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-blue-600/20" />
                 <img
-                  src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&q=80"
-                  alt="Security dashboard showing encrypted data"
+                  src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=800&q=80"
+                  alt="Healthcare professionals using Refero platform"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-6 -right-6 bg-background border border-border rounded-xl p-6 shadow-lg">
-                <div className="text-3xl font-bold text-primary">99.99%</div>
-                <div className="text-sm text-muted-foreground">Uptime SLA</div>
+
+              {/* Floating Stats */}
+              <div className="absolute -bottom-6 -left-6 bg-background border border-border rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10 text-green-600">
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">Instant</div>
+                    <div className="text-sm text-muted-foreground">
+                      Notifications
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -top-6 -right-6 bg-background border border-border rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">100%</div>
+                    <div className="text-sm text-muted-foreground">Secure</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -322,23 +428,27 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-bold tracking-tight mb-4">
-              Trusted by healthcare leaders
+              Trusted by Healthcare Leaders
             </h2>
             <p className="text-lg text-muted-foreground">
-              See what hospitals and medical professionals are saying about
-              Refero.
+              See how hospitals are transforming their referral processes
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-border/40">
-                <CardContent className="pt-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                      {testimonial.name.charAt(0)}
+              <Card
+                key={index}
+                className="border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div
+                      className={`h-12 w-12 rounded-xl flex items-center justify-center ${testimonial.color} font-bold`}
+                    >
+                      {testimonial.avatar}
                     </div>
-                    <div className="ml-4">
+                    <div>
                       <div className="font-semibold">{testimonial.name}</div>
                       <div className="text-sm text-muted-foreground">
                         {testimonial.role}
@@ -356,126 +466,102 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary to-primary/90">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to transform your referral process?
-          </h2>
-          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Join hundreds of hospitals already using Refero to improve patient
-            care and streamline operations.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-primary hover:bg-white/90"
-              onClick={handleGetStarted}
-            >
-              {user ? "Go to Dashboard" : "Start Now"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+      <section className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="border-none bg-gradient-to-br from-primary/5 via-primary/10 to-blue-500/5">
+            <CardContent className="p-12 text-center">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-4xl font-bold mb-6">
+                  Ready to Modernize Your Referral Process?
+                </h2>
+                <p className="text-xl text-muted-foreground mb-10">
+                  Join hundreds of healthcare providers using Refero for secure,
+                  efficient patient care coordination.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    size="lg"
+                    onClick={handleGetStarted}
+                    className="h-14 px-8 text-lg gap-3"
+                  >
+                    {user ? "Go to Dashboard" : "Start Free Trial"}
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => router.push("/contact-hospitals")}
+                    className="h-14 px-8 text-lg"
+                  >
+                    <Building2 className="h-5 w-5 mr-2" />
+                    Contact Hospitals
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-6">
+                  No credit card required • 30-day free trial • HIPAA compliant
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="bg-background border-t py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Globe className="h-5 w-5" />
-                </div>
-                <span className="text-xl font-bold">Refero</span>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
+                <Heart className="h-6 w-6 text-white" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Secure hospital referral system connecting healthcare providers
-                for better patient care.
-              </p>
+              <div>
+                <span className="text-xl font-bold">Refero</span>
+                <p className="text-sm text-muted-foreground">
+                  Hospital Referral System
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/features" className="hover:text-primary">
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/security" className="hover:text-primary">
-                    Security
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-primary">
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/api" className="hover:text-primary">
-                    API
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/about" className="hover:text-primary">
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog" className="hover:text-primary">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/careers" className="hover:text-primary">
-                    Careers
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-primary">
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/privacy" className="hover:text-primary">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="hover:text-primary">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/hipaa" className="hover:text-primary">
-                    HIPAA Compliance
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/gdpr" className="hover:text-primary">
-                    GDPR
-                  </Link>
-                </li>
-              </ul>
+
+            <div className="flex flex-wrap gap-6 justify-center">
+              <Link
+                href="/contact-hospitals"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Contact Hospitals
+              </Link>
+              <Link
+                href="#"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Features
+              </Link>
+              <Link
+                href="#"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Security
+              </Link>
+              <Link
+                href="#"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="#"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Terms of Service
+              </Link>
             </div>
           </div>
-          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>
+
+          <div className="border-t mt-8 pt-8 text-center">
+            <p className="text-sm text-muted-foreground">
               &copy; {new Date().getFullYear()} Refero. All rights reserved.
             </p>
-            <p className="mt-2">
-              Designed for healthcare professionals by healthcare professionals.
+            <p className="text-xs text-muted-foreground mt-2">
+              HIPAA compliant • SOC 2 certified • End-to-end encrypted
             </p>
           </div>
         </div>
